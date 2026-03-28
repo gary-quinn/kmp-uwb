@@ -1,0 +1,29 @@
+# Gradle
+build/
+.gradle/
+
+# IDE
+.idea/
+*.iml
+.fleet/
+
+# Android
+local.properties
+
+# macOS
+.DS_Store
+
+# Kotlin
+*.kotlin_module
+.kotlin/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Xcode
+xcuserdata/
+*.xcuserstate
+
+# Planning artifacts
+TODOS.md
