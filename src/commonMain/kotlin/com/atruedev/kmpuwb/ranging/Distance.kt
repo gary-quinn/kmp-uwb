@@ -1,13 +1,13 @@
 package com.atruedev.kmpuwb.ranging
 
 import kotlin.jvm.JvmInline
+import kotlin.math.round
 
 /**
  * A measured distance between two UWB devices.
  *
- * Wraps a value in meters with an associated accuracy estimate.
- * Accuracy represents the standard deviation of the measurement —
- * smaller values indicate higher confidence.
+ * Wraps a value in meters. The underlying representation uses
+ * bit-packed [Double] for zero-allocation on JVM via [value class].
  */
 @JvmInline
 public value class Distance private constructor(private val packed: Long) : Comparable<Distance> {
@@ -18,7 +18,10 @@ public value class Distance private constructor(private val packed: Long) : Comp
 
     override fun compareTo(other: Distance): Int = meters.compareTo(other.meters)
 
-    override fun toString(): String = "${roundTo(meters, 2)}m"
+    override fun toString(): String {
+        val rounded = round(meters * 100.0) / 100.0
+        return "${rounded}m"
+    }
 
     public companion object {
         /** Create a [Distance] from a value in meters. */
@@ -37,14 +40,3 @@ public val Double.meters: Distance get() = Distance.meters(this)
 
 /** Converts an [Int] representing meters to a [Distance]. */
 public val Int.meters: Distance get() = Distance.meters(this.toDouble())
-
-private fun roundTo(value: Double, decimals: Int): String {
-    var multiplier = 1.0
-    repeat(decimals) { multiplier *= 10 }
-    val rounded = kotlin.math.round(value * multiplier) / multiplier
-    val str = rounded.toString()
-    val dotIndex = str.indexOf('.')
-    if (dotIndex == -1) return "$str.${"0".repeat(decimals)}"
-    val currentDecimals = str.length - dotIndex - 1
-    return if (currentDecimals >= decimals) str.substring(0, dotIndex + decimals + 1) else str + "0".repeat(decimals - currentDecimals)
-}

@@ -11,17 +11,24 @@ import com.atruedev.kmpuwb.ranging.Distance
 import com.atruedev.kmpuwb.ranging.RangingMeasurement
 import com.atruedev.kmpuwb.state.RangingState
 import kotlinx.cinterop.Vector128
+import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.usePinned
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
+import platform.Foundation.NSData
+import platform.Foundation.NSKeyedArchiver
 import platform.NearbyInteraction.NIAlgorithmConvergence
+import platform.NearbyInteraction.NIDiscoveryToken
 import platform.NearbyInteraction.NINearbyObject
 import platform.NearbyInteraction.NINearbyObjectRemovalReason
 import platform.NearbyInteraction.NISession
@@ -39,7 +46,10 @@ internal class IosRangingSession(
     private val _state = MutableStateFlow<RangingState>(RangingState.Idle.Ready)
     override val state: StateFlow<RangingState> = _state.asStateFlow()
 
-    private val resultChannel = Channel<RangingResult>(capacity = Channel.BUFFERED)
+    private val resultChannel = Channel<RangingResult>(
+        capacity = 64,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
     override val rangingResults: Flow<RangingResult> = resultChannel.receiveAsFlow()
 
     private var niSession: NISession? = null
@@ -50,13 +60,15 @@ internal class IosRangingSession(
             "Cannot start session in state ${_state.value}"
         }
 
-        _state.value = RangingState.Starting.Negotiating
+        scope.launch {
+            _state.value = RangingState.Starting.Negotiating
 
-        niSession = NISession().apply {
-            this.delegate = this@IosRangingSession.delegate
+            niSession = NISession().apply {
+                this.delegate = this@IosRangingSession.delegate
+            }
+
+            _state.value = RangingState.Starting.Initializing
         }
-
-        _state.value = RangingState.Starting.Initializing
     }
 
     override fun close() {
@@ -80,14 +92,16 @@ internal class IosRangingSession(
                 )
 
                 val peer = Peer(
-                    address = PeerAddress(byteArrayOf()),
+                    address = PeerAddress.fromDiscoveryToken(obj.discoveryToken),
                 )
 
                 resultChannel.trySend(RangingResult.Position(peer, measurement))
             }
 
-            if (_state.value !is RangingState.Active.Ranging) {
-                _state.value = RangingState.Active.Ranging
+            scope.launch {
+                if (_state.value !is RangingState.Active.Ranging) {
+                    _state.value = RangingState.Active.Ranging
+                }
             }
         }
 
@@ -98,19 +112,21 @@ internal class IosRangingSession(
         ) {
             val removedObjects = didRemoveNearbyObjects.filterIsInstance<NINearbyObject>()
             for (obj in removedObjects) {
-                val peer = Peer(address = PeerAddress(byteArrayOf()))
+                val peer = Peer(
+                    address = PeerAddress.fromDiscoveryToken(obj.discoveryToken),
+                )
                 resultChannel.trySend(RangingResult.PeerLost(peer))
             }
 
-            _state.value = RangingState.Active.PeerLost
+            scope.launch { _state.value = RangingState.Active.PeerLost }
         }
 
         override fun sessionWasSuspended(session: NISession) {
-            _state.value = RangingState.Active.Suspended
+            scope.launch { _state.value = RangingState.Active.Suspended }
         }
 
         override fun sessionSuspensionEnded(session: NISession) {
-            _state.value = RangingState.Active.Ranging
+            scope.launch { _state.value = RangingState.Active.Ranging }
         }
 
         override fun session(
@@ -120,7 +136,7 @@ internal class IosRangingSession(
             val error = SessionLost(
                 message = "NearbyInteraction session invalidated: ${didInvalidateWithError.localizedDescription}",
             )
-            _state.value = RangingState.Stopped.ByError(error)
+            scope.launch { _state.value = RangingState.Stopped.ByError(error) }
             resultChannel.close()
         }
 
@@ -162,6 +178,25 @@ private fun extractElevation(direction: Vector128): Angle? {
     return Angle.degrees(
         kotlin.math.atan2(y.toDouble(), horizontalDistance) * (180.0 / kotlin.math.PI),
     )
+}
+
+/**
+ * Serializes a NearbyInteraction discovery token into a stable byte representation
+ * suitable for peer identity tracking across delegate callbacks.
+ */
+private fun PeerAddress.Companion.fromDiscoveryToken(token: NIDiscoveryToken): PeerAddress {
+    val data: NSData = NSKeyedArchiver.archivedDataWithRootObject(token)
+    return PeerAddress(data.toByteArray())
+}
+
+private fun NSData.toByteArray(): ByteArray {
+    val length = this.length.toInt()
+    if (length == 0) return byteArrayOf()
+    val bytes = ByteArray(length)
+    bytes.usePinned { pinned ->
+        platform.posix.memcpy(pinned.addressOf(0), this.bytes, this.length)
+    }
+    return bytes
 }
 
 public actual fun RangingSession(config: RangingConfig): RangingSession =

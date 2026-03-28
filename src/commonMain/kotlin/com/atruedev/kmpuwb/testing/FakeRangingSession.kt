@@ -41,8 +41,10 @@ public class FakeRangingSession(
     private val resultChannel = Channel<RangingResult>(capacity = Channel.BUFFERED)
     override val rangingResults: Flow<RangingResult> = resultChannel.receiveAsFlow()
 
-    /** Peers currently in range. */
-    public val activePeers: MutableSet<Peer> = mutableSetOf()
+    private val _activePeers: MutableSet<Peer> = mutableSetOf()
+
+    /** Peers currently in range (immutable snapshot). */
+    public val activePeers: Set<Peer> get() = _activePeers.toSet()
 
     override suspend fun start(peer: Peer) {
         check(_state.value is RangingState.Idle.Ready) {
@@ -51,12 +53,12 @@ public class FakeRangingSession(
         _state.value = RangingState.Starting.Negotiating
         _state.value = RangingState.Starting.Initializing
         _state.value = RangingState.Active.Ranging
-        activePeers.add(peer)
+        _activePeers.add(peer)
     }
 
     override fun close() {
         _state.value = RangingState.Stopped.ByRequest
-        activePeers.clear()
+        _activePeers.clear()
         resultChannel.close()
     }
 
@@ -67,16 +69,16 @@ public class FakeRangingSession(
 
     /** Simulate a peer moving out of range. */
     public fun simulatePeerLost(peer: Peer) {
-        activePeers.remove(peer)
+        _activePeers.remove(peer)
         resultChannel.trySend(RangingResult.PeerLost(peer))
-        if (activePeers.isEmpty()) {
+        if (_activePeers.isEmpty()) {
             _state.value = RangingState.Active.PeerLost
         }
     }
 
     /** Simulate a peer returning to range with a new measurement. */
     public fun simulatePeerRecovered(result: RangingResult.PeerRecovered) {
-        activePeers.add(result.peer)
+        _activePeers.add(result.peer)
         resultChannel.trySend(result)
         _state.value = RangingState.Active.Ranging
     }
@@ -84,7 +86,7 @@ public class FakeRangingSession(
     /** Simulate a session error. */
     public fun simulateError(error: UwbError) {
         _state.value = RangingState.Stopped.ByError(error)
-        activePeers.clear()
+        _activePeers.clear()
         resultChannel.close()
     }
 
@@ -101,7 +103,7 @@ public class FakeRangingSession(
     /** Simulate the remote peer ending the session. */
     public fun simulatePeerDisconnect() {
         _state.value = RangingState.Stopped.ByPeer
-        activePeers.clear()
+        _activePeers.clear()
         resultChannel.close()
     }
 
