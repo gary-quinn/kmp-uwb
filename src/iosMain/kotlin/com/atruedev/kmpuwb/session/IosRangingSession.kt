@@ -1,12 +1,16 @@
+@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+
 package com.atruedev.kmpuwb.session
 
 import com.atruedev.kmpuwb.config.RangingConfig
 import com.atruedev.kmpuwb.error.SessionLost
 import com.atruedev.kmpuwb.peer.Peer
 import com.atruedev.kmpuwb.peer.PeerAddress
+import com.atruedev.kmpuwb.ranging.Angle
 import com.atruedev.kmpuwb.ranging.Distance
 import com.atruedev.kmpuwb.ranging.RangingMeasurement
 import com.atruedev.kmpuwb.state.RangingState
+import kotlinx.cinterop.Vector128
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -71,6 +75,8 @@ internal class IosRangingSession(
             for (obj in nearbyObjects) {
                 val measurement = RangingMeasurement(
                     distance = Distance.meters(obj.distance.toDouble()),
+                    azimuth = extractAzimuth(obj.direction),
+                    elevation = extractElevation(obj.direction),
                 )
 
                 val peer = Peer(
@@ -123,12 +129,39 @@ internal class IosRangingSession(
             didUpdateAlgorithmConvergence: NIAlgorithmConvergence,
             forObject: NINearbyObject?,
         ) = Unit
-
-        // TODO(#1): parse simd_float3 direction vector for azimuth/elevation
-        //  NINearbyObject.direction is a vector_float3 — K/N interop requires
-        //  careful CValue handling. Deferring to avoid fragile cinterop code
-        //  in the foundation commit.
     }
+}
+
+/**
+ * Extracts azimuth (horizontal angle) from a NearbyInteraction direction vector.
+ *
+ * NINearbyObject.direction is a simd_float3 mapped to [Vector128] in K/N.
+ * Components: x (index 0) = left/right, y (index 1) = up/down, z (index 2) = forward.
+ * Returns null when the direction vector is zero (device outside U1/U2 field of view).
+ */
+private fun extractAzimuth(direction: Vector128): Angle? {
+    val x = direction.getFloatAt(0)
+    val z = direction.getFloatAt(2)
+    if (x == 0f && z == 0f) return null
+    return Angle.degrees(
+        kotlin.math.atan2(x.toDouble(), z.toDouble()) * (180.0 / kotlin.math.PI),
+    )
+}
+
+/**
+ * Extracts elevation (vertical angle) from a NearbyInteraction direction vector.
+ *
+ * Returns null when the direction vector is zero.
+ */
+private fun extractElevation(direction: Vector128): Angle? {
+    val x = direction.getFloatAt(0)
+    val y = direction.getFloatAt(1)
+    val z = direction.getFloatAt(2)
+    val horizontalDistance = kotlin.math.sqrt((x * x + z * z).toDouble())
+    if (horizontalDistance == 0.0 && y == 0f) return null
+    return Angle.degrees(
+        kotlin.math.atan2(y.toDouble(), horizontalDistance) * (180.0 / kotlin.math.PI),
+    )
 }
 
 public actual fun RangingSession(config: RangingConfig): RangingSession =
