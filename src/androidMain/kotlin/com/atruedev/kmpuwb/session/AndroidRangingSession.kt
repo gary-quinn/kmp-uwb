@@ -157,6 +157,50 @@ internal class AndroidRangingSession(
             azimuth = this.azimuth?.let { Angle.degrees(it.value.toDouble()) },
             elevation = this.elevation?.let { Angle.degrees(it.value.toDouble()) },
         )
+
+    internal suspend fun startRangingWithScope(
+        sessionScope: androidx.core.uwb.UwbClientSessionScope,
+        rangingParameters: RangingParameters,
+    ) {
+        try {
+            _state.value = RangingState.Starting.Initializing
+            _state.value = RangingState.Active.Ranging
+
+            sessionScope.prepareSession(rangingParameters).collect { platformResult ->
+                val result = platformResult.toRangingResult()
+                if (result != null) {
+                    resultChannel.trySend(result)
+                }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            val error =
+                SessionLost(
+                    message = "Android ranging session failed: ${e.message}",
+                    cause = e,
+                )
+            _state.value = RangingState.Stopped.ByError(error)
+            resultChannel.close()
+        }
+    }
+
+    internal companion object {
+        fun fromPrepared(
+            config: RangingConfig,
+            context: Context,
+            sessionScope: androidx.core.uwb.UwbClientSessionScope,
+            rangingParameters: RangingParameters,
+        ): AndroidRangingSession {
+            val session = AndroidRangingSession(config, context)
+            session._state.value = RangingState.Starting.Negotiating
+            session.rangingJob =
+                session.scope.launch {
+                    session.startRangingWithScope(sessionScope, rangingParameters)
+                }
+            return session
+        }
+    }
 }
 
 public actual fun RangingSession(config: RangingConfig): RangingSession {

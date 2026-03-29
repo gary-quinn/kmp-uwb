@@ -3,7 +3,9 @@ package com.atruedev.kmpuwb.testing
 import com.atruedev.kmpuwb.adapter.UwbAdapter
 import com.atruedev.kmpuwb.adapter.UwbAdapterState
 import com.atruedev.kmpuwb.adapter.UwbCapabilities
+import com.atruedev.kmpuwb.config.RangingConfig
 import com.atruedev.kmpuwb.config.RangingRole
+import com.atruedev.kmpuwb.session.PreparedSession
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,6 +34,16 @@ public class FakeUwbAdapter(
         } else {
             capabilities
         }
+
+    private var preparedSessionFactory: ((RangingConfig) -> PreparedSession)? = null
+
+    /** Configure a custom factory for [prepareSession] results. */
+    public fun setPreparedSessionFactory(factory: (RangingConfig) -> PreparedSession) {
+        preparedSessionFactory = factory
+    }
+
+    override suspend fun prepareSession(config: RangingConfig): PreparedSession =
+        preparedSessionFactory?.invoke(config) ?: FakePreparedSession(config = config)
 
     /** Transition adapter to [UwbAdapterState.OFF]. */
     public fun simulateDisabled() {

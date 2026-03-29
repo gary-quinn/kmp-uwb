@@ -27,6 +27,9 @@ public sealed interface HardwareError : UwbError
 /** Errors related to security, STS verification, or credential management. */
 public sealed interface SecurityError : UwbError
 
+/** Errors related to out-of-band peer connection and parameter exchange. */
+public sealed interface ConnectionError : UwbError
+
 /** The ranging session was lost unexpectedly after being established. */
 public data class SessionLost(
     override val message: String,
@@ -70,3 +73,9 @@ public data class StsVerificationFailed(
     override val message: String = "STS verification failed",
     override val cause: Throwable? = null,
 ) : SecurityError
+
+/** The out-of-band parameter exchange with the remote peer failed. */
+public data class OobExchangeFailed(
+    override val message: String,
+    override val cause: Throwable? = null,
+) : ConnectionError

@@ -155,6 +155,18 @@ internal class IosRangingSession(
             forObject: NINearbyObject?,
         ) = Unit
     }
+
+    internal companion object {
+        fun fromPrepared(
+            config: RangingConfig,
+            existingSession: NISession,
+        ): IosRangingSession {
+            val session = IosRangingSession(config)
+            session.niSession = existingSession
+            existingSession.delegate = session.delegate
+            return session
+        }
+    }
 }
 
 /**
