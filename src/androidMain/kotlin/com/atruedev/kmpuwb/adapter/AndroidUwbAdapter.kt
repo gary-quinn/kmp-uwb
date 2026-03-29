@@ -2,6 +2,7 @@ package com.atruedev.kmpuwb.adapter
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.util.Log
 import androidx.core.uwb.UwbManager
 import com.atruedev.kmpuwb.config.RangingConfig
 import com.atruedev.kmpuwb.config.RangingRole
@@ -28,10 +29,8 @@ internal class AndroidUwbAdapter(
             val controllerSession = uwbManager.controllerSessionScope()
             val capabilities = controllerSession.rangingCapabilities
 
-            val roles = setOf(RangingRole.CONTROLLER, RangingRole.CONTROLEE)
-
             UwbCapabilities(
-                supportedRoles = roles,
+                supportedRoles = setOf(RangingRole.CONTROLLER, RangingRole.CONTROLEE),
                 angleOfArrivalSupported = capabilities.isAzimuthalAngleSupported,
                 supportedChannels = capabilities.supportedChannels.toSet(),
                 backgroundRangingSupported = capabilities.isBackgroundRangingSupported,
@@ -54,14 +53,12 @@ internal class AndroidUwbAdapter(
     private fun resolveAdapterState(): UwbAdapterState {
         val hasFeature =
             context.packageManager.hasSystemFeature(PackageManager.FEATURE_UWB)
-        if (hasFeature) return UwbAdapterState.ON
 
-        // Fallback: some devices report UWB capability through UwbManager
-        // even when PackageManager.FEATURE_UWB is absent
-        return try {
-            UwbManager.createInstance(context)
+        Log.d("kmp-uwb", "PackageManager.FEATURE_UWB = $hasFeature")
+
+        return if (hasFeature) {
             UwbAdapterState.ON
-        } catch (_: Exception) {
+        } else {
             UwbAdapterState.UNSUPPORTED
         }
     }
