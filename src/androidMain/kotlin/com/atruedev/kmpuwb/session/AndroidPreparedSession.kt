@@ -30,24 +30,30 @@ internal class AndroidPreparedSession(
     private val context: Context,
     private val sessionScope: UwbClientSessionScope,
 ) : PreparedSession {
-    @Volatile
+    private val scope =
+        CoroutineScope(
+            SupervisorJob() + Dispatchers.Default.limitedParallelism(1),
+        )
     private var consumed: Boolean = false
 
     override val localParams: SessionParams by lazy {
         encodeLocalParams()
     }
 
-    override suspend fun startRanging(remoteParams: SessionParams): RangingSession {
-        check(!consumed) { "PreparedSession has already been consumed" }
-        consumed = true
+    override suspend fun startRanging(remoteParams: SessionParams): RangingSession =
+        kotlinx.coroutines.withContext(scope.coroutineContext) {
+            check(!consumed) { "PreparedSession has already been consumed" }
+            consumed = true
 
-        val decoded = decodeRemoteParams(remoteParams)
-        val rangingParameters = buildRangingParameters(decoded)
-        return createRangingSession(rangingParameters)
-    }
+            val decoded = decodeRemoteParams(remoteParams)
+            val rangingParameters = buildRangingParameters(decoded)
+            createRangingSession(rangingParameters)
+        }
 
     override fun close() {
-        consumed = true
+        scope.launch {
+            consumed = true
+        }
     }
 
     private fun encodeLocalParams(): SessionParams = SessionParams(sessionScope.localAddress.address)
