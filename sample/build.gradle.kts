@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.library)
@@ -32,15 +34,9 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project(":"))
-            // compose.* accessors are deprecated in favor of libs.* catalog entries,
-            // but Compose Multiplatform Gradle plugin still uses them for KMP targets
-            @Suppress("DEPRECATION")
             implementation(compose.runtime)
-            @Suppress("DEPRECATION")
             implementation(compose.foundation)
-            @Suppress("DEPRECATION")
             implementation(compose.material3)
-            @Suppress("DEPRECATION")
             implementation(compose.ui)
             implementation(libs.kotlinx.coroutines.core)
         }
