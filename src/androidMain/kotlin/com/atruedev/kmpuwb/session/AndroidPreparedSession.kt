@@ -135,10 +135,6 @@ internal class AndroidPreparedSession(
     }
 }
 
-/**
- * RangingSession created from a PreparedSession — owns its own scope and channels.
- * Avoids mutating an externally-created AndroidRangingSession's internal state.
- */
 private class PreparedAndroidRangingSession(
     override val config: RangingConfig,
     private val scope: CoroutineScope,
