@@ -7,7 +7,7 @@ coroutines = "1.10.2"
 androidMinSdk = "33"
 androidCompileSdk = "36"
 androidx-core = "1.18.0"
-androidx-core-uwb = "1.0.0-alpha11"
+androidx-core-uwb = "1.0.0-beta01"
 turbine = "1.2.1"
 
 [libraries]
