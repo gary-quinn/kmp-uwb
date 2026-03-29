@@ -14,3 +14,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "kmp-uwb"
+
+include(":sample")
