@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -154,37 +153,50 @@ private fun ParamsExchangeCard(
     onRemoteParamsSubmitted: (String) -> Unit,
 ) {
     var remoteInput by remember { mutableStateOf("") }
+    var copied by remember { mutableStateOf(false) }
 
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "1. Copy your local params (send to other device):",
+                text = "Step 1: Send to the other device",
                 style = MaterialTheme.typography.labelMedium,
             )
-            SelectionContainer {
-                Text(
-                    text = localParams.ifEmpty { "Generating..." },
-                    fontSize = 11.sp,
-                    fontFamily = FontFamily.Monospace,
-                    modifier = Modifier.padding(vertical = 8.dp),
-                    lineHeight = 14.sp,
-                )
+            Text(
+                text = "Tap Copy, then send via AirDrop or any messaging app.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 2.dp, bottom = 8.dp),
+            )
+            OutlinedButton(
+                onClick = {
+                    copyToClipboard(localParams)
+                    copied = true
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = localParams.isNotEmpty(),
+            ) {
+                Text(if (copied) "Copied ✓" else "Copy Local Params")
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "2. Paste the other device's params:",
+                text = "Step 2: Paste from the other device",
                 style = MaterialTheme.typography.labelMedium,
+            )
+            Text(
+                text = "Copy the other device's params and paste here.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 2.dp, bottom = 8.dp),
             )
             OutlinedTextField(
                 value = remoteInput,
                 onValueChange = { remoteInput = it },
                 modifier =
                     Modifier
-                        .fillMaxWidth()
-                        .padding(top = 4.dp),
-                placeholder = { Text("Paste Base64 params here") },
+                        .fillMaxWidth(),
+                placeholder = { Text("Paste remote params") },
                 singleLine = false,
                 minLines = 2,
                 maxLines = 4,
@@ -195,7 +207,7 @@ private fun ParamsExchangeCard(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp),
+                        .padding(top = 12.dp),
                 enabled = remoteInput.isNotBlank(),
             ) {
                 Text("Start Ranging")

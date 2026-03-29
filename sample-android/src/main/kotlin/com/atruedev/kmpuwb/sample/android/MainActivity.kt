@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.mutableStateOf
 import com.atruedev.kmpuwb.sample.RangingDemoScreen
+import com.atruedev.kmpuwb.sample.initClipboard
 
 class MainActivity : ComponentActivity() {
     private val permissionGranted = mutableStateOf(false)
@@ -20,6 +21,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        initClipboard(this)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (checkSelfPermission(Manifest.permission.UWB_RANGING) == PackageManager.PERMISSION_GRANTED) {
