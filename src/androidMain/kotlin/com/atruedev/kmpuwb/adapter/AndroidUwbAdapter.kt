@@ -51,12 +51,20 @@ internal class AndroidUwbAdapter(
         return AndroidPreparedSession(config, context, sessionScope)
     }
 
-    private fun resolveAdapterState(): UwbAdapterState =
-        if (context.packageManager.hasSystemFeature(PackageManager.FEATURE_UWB)) {
+    private fun resolveAdapterState(): UwbAdapterState {
+        val hasFeature =
+            context.packageManager.hasSystemFeature(PackageManager.FEATURE_UWB)
+        if (hasFeature) return UwbAdapterState.ON
+
+        // Fallback: some devices report UWB capability through UwbManager
+        // even when PackageManager.FEATURE_UWB is absent
+        return try {
+            UwbManager.createInstance(context)
             UwbAdapterState.ON
-        } else {
+        } catch (_: Exception) {
             UwbAdapterState.UNSUPPORTED
         }
+    }
 }
 
 public actual fun UwbAdapter(): UwbAdapter {
