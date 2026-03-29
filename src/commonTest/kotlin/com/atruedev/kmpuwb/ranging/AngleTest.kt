@@ -7,7 +7,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class AngleTest {
-
     @Test
     fun degreesCreatesValidAngle() {
         val angle = Angle.degrees(45.0)
