@@ -83,7 +83,6 @@ internal class IosRangingSession(
         scope.cancel()
     }
 
-    @Suppress("CONFLICTING_OVERLOADS")
     private inner class SessionDelegate : NSObject(), NISessionDelegateProtocol {
         override fun session(
             session: NISession,
