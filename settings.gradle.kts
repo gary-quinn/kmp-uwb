@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 rootProject.name = "kmp-uwb"
 
 include(":sample")
+include(":sample-android")
