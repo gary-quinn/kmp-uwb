@@ -27,16 +27,20 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import platform.Foundation.NSData
 import platform.Foundation.NSKeyedArchiver
+import platform.Foundation.NSKeyedUnarchiver
+import platform.Foundation.create
 import platform.NearbyInteraction.NIAlgorithmConvergence
 import platform.NearbyInteraction.NIDiscoveryToken
 import platform.NearbyInteraction.NINearbyObject
 import platform.NearbyInteraction.NINearbyObjectRemovalReason
+import platform.NearbyInteraction.NINearbyPeerConfiguration
 import platform.NearbyInteraction.NISession
 import platform.NearbyInteraction.NISessionDelegateProtocol
 import platform.darwin.NSObject
 
 internal class IosRangingSession(
     override val config: RangingConfig,
+    existingSession: NISession? = null,
 ) : RangingSession {
     private val scope =
         CoroutineScope(
@@ -53,8 +57,9 @@ internal class IosRangingSession(
         )
     override val rangingResults: Flow<RangingResult> = resultChannel.receiveAsFlow()
 
-    private var niSession: NISession? = null
+    private var niSession: NISession? = existingSession
     private val delegate = SessionDelegate()
+    private val tokenCache = DiscoveryTokenCache()
 
     override suspend fun start(peer: Peer) {
         check(_state.value is RangingState.Idle.Ready) {
@@ -64,12 +69,29 @@ internal class IosRangingSession(
         _state.value = RangingState.Starting.Negotiating
 
         scope.launch {
-            niSession =
-                NISession().apply {
-                    this.delegate = this@IosRangingSession.delegate
-                }
+            val session = niSession ?: NISession()
+            session.delegate = delegate
+            niSession = session
 
             _state.value = RangingState.Starting.Initializing
+        }
+    }
+
+    internal fun startPrepared(remoteParams: SessionParams) {
+        check(_state.value is RangingState.Idle.Ready) {
+            "Cannot start session in state ${_state.value}"
+        }
+
+        _state.value = RangingState.Starting.Negotiating
+
+        scope.launch {
+            val session = niSession ?: error("NISession not initialized")
+            session.delegate = delegate
+
+            _state.value = RangingState.Starting.Initializing
+
+            val peerToken = deserializeDiscoveryToken(remoteParams.toByteArray())
+            session.runWithConfiguration(NINearbyPeerConfiguration(peerToken))
         }
     }
 
@@ -99,10 +121,7 @@ internal class IosRangingSession(
                         elevation = extractElevation(obj.direction),
                     )
 
-                val peer =
-                    Peer(
-                        address = PeerAddress.fromDiscoveryToken(obj.discoveryToken),
-                    )
+                val peer = Peer(address = tokenCache.resolve(obj.discoveryToken))
 
                 resultChannel.trySend(RangingResult.Position(peer, measurement))
             }
@@ -121,10 +140,7 @@ internal class IosRangingSession(
         ) {
             val removedObjects = didRemoveNearbyObjects.filterIsInstance<NINearbyObject>()
             for (obj in removedObjects) {
-                val peer =
-                    Peer(
-                        address = PeerAddress.fromDiscoveryToken(obj.discoveryToken),
-                    )
+                val peer = Peer(address = tokenCache.resolve(obj.discoveryToken))
                 resultChannel.trySend(RangingResult.PeerLost(peer))
             }
 
@@ -160,10 +176,28 @@ internal class IosRangingSession(
 }
 
 /**
- * Extracts azimuth (horizontal angle) from a NearbyInteraction direction vector.
+ * Caches NIDiscoveryToken → PeerAddress mappings for the session's lifetime.
  *
+ * NSKeyedArchiver serialization is expensive (~0.1ms). Without caching,
+ * it runs on every didUpdateNearbyObjects callback (~5Hz per peer).
+ * The token-to-address mapping is stable — the same token always produces
+ * the same bytes — so caching is safe.
+ *
+ * Thread safety: all delegate callbacks run on Apple's dispatch queue,
+ * and this cache is only accessed from those callbacks. No synchronization needed.
+ */
+private class DiscoveryTokenCache {
+    private val cache = mutableMapOf<NIDiscoveryToken, PeerAddress>()
+
+    fun resolve(token: NIDiscoveryToken): PeerAddress =
+        cache.getOrPut(token) {
+            PeerAddress(serializeDiscoveryToken(token))
+        }
+}
+
+/**
  * NINearbyObject.direction is a simd_float3 mapped to [Vector128] in K/N.
- * Components: x (index 0) = left/right, y (index 1) = up/down, z (index 2) = forward.
+ * Coordinate system: x (index 0) = left/right, y (index 1) = up/down, z (index 2) = forward.
  * Returns null when the direction vector is zero (device outside U1/U2 field of view).
  */
 private fun extractAzimuth(direction: Vector128): Angle? {
@@ -175,11 +209,6 @@ private fun extractAzimuth(direction: Vector128): Angle? {
     )
 }
 
-/**
- * Extracts elevation (vertical angle) from a NearbyInteraction direction vector.
- *
- * Returns null when the direction vector is zero.
- */
 private fun extractElevation(direction: Vector128): Angle? {
     val x = direction.getFloatAt(0)
     val y = direction.getFloatAt(1)
@@ -191,16 +220,17 @@ private fun extractElevation(direction: Vector128): Angle? {
     )
 }
 
-/**
- * Serializes a NearbyInteraction discovery token into a stable byte representation
- * suitable for peer identity tracking across delegate callbacks.
- */
-private fun PeerAddress.Companion.fromDiscoveryToken(token: NIDiscoveryToken): PeerAddress {
+internal fun serializeDiscoveryToken(token: NIDiscoveryToken): ByteArray {
     val data: NSData = NSKeyedArchiver.archivedDataWithRootObject(token)
-    return PeerAddress(data.toByteArray())
+    return data.toByteArray()
 }
 
-private fun NSData.toByteArray(): ByteArray {
+internal fun deserializeDiscoveryToken(bytes: ByteArray): NIDiscoveryToken {
+    val data = bytes.toNSData()
+    return NSKeyedUnarchiver.unarchiveObjectWithData(data) as NIDiscoveryToken
+}
+
+internal fun NSData.toByteArray(): ByteArray {
     val length = this.length.toInt()
     if (length == 0) return byteArrayOf()
     val bytes = ByteArray(length)
@@ -208,6 +238,13 @@ private fun NSData.toByteArray(): ByteArray {
         platform.posix.memcpy(pinned.addressOf(0), this.bytes, this.length)
     }
     return bytes
+}
+
+internal fun ByteArray.toNSData(): NSData {
+    if (isEmpty()) return NSData()
+    return usePinned { pinned ->
+        NSData.create(bytes = pinned.addressOf(0), length = size.toULong())
+    }
 }
 
 public actual fun RangingSession(config: RangingConfig): RangingSession = IosRangingSession(config)

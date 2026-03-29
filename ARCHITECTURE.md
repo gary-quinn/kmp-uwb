@@ -126,6 +126,10 @@ UWB measurements arrive at high frequency (~5 Hz). The pipeline is designed for 
 
 On Android, `scope.launch { startRangingWithPeer(peer) }` runs once when `start()` is called. The launched coroutine collects from `sessionScope.prepareSession()` and feeds results into the channel. This avoids the pitfall where each `collect()` call on `rangingResults` would create a new platform session.
 
+### iOS Discovery Token Cache
+
+On iOS, `NIDiscoveryToken` → `PeerAddress` requires `NSKeyedArchiver` serialization. Since the token-to-address mapping is stable for a session's lifetime, `DiscoveryTokenCache` caches it per session rather than re-serializing on every callback. No synchronization needed — the cache is only accessed from Apple's delegate dispatch queue.
+
 ---
 
 ## Error Model

@@ -1,6 +1,9 @@
 package com.atruedev.kmpuwb.adapter
 
+import com.atruedev.kmpuwb.config.RangingConfig
 import com.atruedev.kmpuwb.config.RangingRole
+import com.atruedev.kmpuwb.session.IosPreparedSession
+import com.atruedev.kmpuwb.session.PreparedSession
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,6 +26,8 @@ internal class IosUwbAdapter : UwbAdapter {
             backgroundRangingSupported = false,
         )
     }
+
+    override suspend fun prepareSession(config: RangingConfig): PreparedSession = IosPreparedSession(config)
 
     private fun resolveAdapterState(): UwbAdapterState =
         if (NISession.deviceCapabilities.supportsPreciseDistanceMeasurement) {
