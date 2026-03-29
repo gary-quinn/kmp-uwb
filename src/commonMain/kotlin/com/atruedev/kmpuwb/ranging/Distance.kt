@@ -4,10 +4,11 @@ import kotlin.jvm.JvmInline
 import kotlin.math.round
 
 /**
- * A measured distance between two UWB devices.
+ * A non-negative distance in meters between two UWB devices.
  *
- * Wraps a value in meters. The underlying representation uses
- * bit-packed [Double] for zero-allocation on JVM via [value class].
+ * Bit-packs the [Double] value into a [Long] for zero-allocation
+ * on JVM via [value class]. Use [Distance.meters] or the [Double.meters]
+ * extension to construct.
  */
 @JvmInline
 public value class Distance private constructor(private val packed: Long) : Comparable<Distance> {

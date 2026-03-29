@@ -27,13 +27,6 @@ public sealed interface HardwareError : UwbError
 /** Errors related to security, STS verification, or credential management. */
 public sealed interface SecurityError : UwbError
 
-/** The ranging session could not be established. */
-public data class SessionStartFailed(
-    override val message: String,
-    val platformCode: Int? = null,
-    override val cause: Throwable? = null,
-) : SessionError
-
 /** The ranging session was lost unexpectedly after being established. */
 public data class SessionLost(
     override val message: String,

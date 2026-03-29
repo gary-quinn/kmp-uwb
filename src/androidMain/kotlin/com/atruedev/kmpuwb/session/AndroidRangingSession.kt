@@ -68,7 +68,9 @@ internal class AndroidRangingSession(
     override fun close() {
         rangingJob?.cancel()
         rangingJob = null
-        _state.value = RangingState.Stopped.ByRequest
+        if (_state.value !is RangingState.Stopped) {
+            _state.value = RangingState.Stopped.ByRequest
+        }
         resultChannel.close()
         scope.cancel()
     }

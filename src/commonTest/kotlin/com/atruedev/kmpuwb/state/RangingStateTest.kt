@@ -47,7 +47,6 @@ class RangingStateTest {
             is RangingState.Idle -> "idle"
             is RangingState.Starting -> "starting"
             is RangingState.Active -> "active"
-            is RangingState.Stopping -> "stopping"
             is RangingState.Stopped -> "stopped"
         }
 

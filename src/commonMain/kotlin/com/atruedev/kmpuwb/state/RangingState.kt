@@ -10,9 +10,9 @@ import com.atruedev.kmpuwb.error.UwbError
  * precise error recovery and UI feedback.
  *
  * Transition order:
- * [Idle] → [Starting] → [Active] → [Stopping] → [Stopped]
+ * [Idle] → [Starting] → [Active] → [Stopped]
  *
- * Any active state can transition to [Stopped] on error.
+ * Any non-terminal state can transition to [Stopped] on error.
  */
 public sealed interface RangingState {
 
@@ -44,15 +44,6 @@ public sealed interface RangingState {
 
         /** Peer temporarily out of range but session is maintained. */
         public data object PeerLost : Active
-    }
-
-    /** Session is being torn down. */
-    public sealed interface Stopping : RangingState {
-        /** Local close was requested. */
-        public data object Requested : Stopping
-
-        /** Stopping due to an error. */
-        public data class Error(val error: UwbError) : Stopping
     }
 
     /** Session has ended. */

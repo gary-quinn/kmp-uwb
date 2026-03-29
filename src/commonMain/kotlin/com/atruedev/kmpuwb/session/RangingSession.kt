@@ -47,9 +47,11 @@ public interface RangingSession : AutoCloseable {
     public suspend fun start(peer: Peer)
 
     /**
-     * Ranging measurements as a cold [Flow].
+     * Ranging measurements as a hot [Flow] backed by a buffered channel.
      *
-     * No resources are allocated until collection begins.
+     * Results are emitted after [start] is called and buffered until
+     * collection begins. Uses DROP_OLDEST backpressure — stale measurements
+     * are discarded if the consumer falls behind.
      * The flow completes when the session enters [RangingState.Stopped].
      */
     public val rangingResults: Flow<RangingResult>

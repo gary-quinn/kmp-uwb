@@ -60,9 +60,9 @@ internal class IosRangingSession(
             "Cannot start session in state ${_state.value}"
         }
 
-        scope.launch {
-            _state.value = RangingState.Starting.Negotiating
+        _state.value = RangingState.Starting.Negotiating
 
+        scope.launch {
             niSession = NISession().apply {
                 this.delegate = this@IosRangingSession.delegate
             }
@@ -74,7 +74,9 @@ internal class IosRangingSession(
     override fun close() {
         niSession?.invalidate()
         niSession = null
-        _state.value = RangingState.Stopped.ByRequest
+        if (_state.value !is RangingState.Stopped) {
+            _state.value = RangingState.Stopped.ByRequest
+        }
         resultChannel.close()
         scope.cancel()
     }

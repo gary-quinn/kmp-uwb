@@ -38,7 +38,7 @@ public class FakeRangingSession(
     private val _state = MutableStateFlow<RangingState>(RangingState.Idle.Ready)
     override val state: StateFlow<RangingState> = _state.asStateFlow()
 
-    private val resultChannel = Channel<RangingResult>(capacity = Channel.BUFFERED)
+    private val resultChannel = Channel<RangingResult>(capacity = Channel.UNLIMITED)
     override val rangingResults: Flow<RangingResult> = resultChannel.receiveAsFlow()
 
     private val _activePeers: MutableSet<Peer> = mutableSetOf()

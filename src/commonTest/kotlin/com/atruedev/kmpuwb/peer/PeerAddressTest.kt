@@ -44,6 +44,14 @@ class PeerAddressTest {
     }
 
     @Test
+    fun constructorDefensivelyCopiesInput() {
+        val original = byteArrayOf(0x01, 0x02)
+        val address = PeerAddress(original)
+        original[0] = 0xFF.toByte()
+        assertEquals(0x01.toByte(), address.toByteArray()[0])
+    }
+
+    @Test
     fun emptyAddressIsValid() {
         val address = PeerAddress(byteArrayOf())
         assertEquals(0, address.size)

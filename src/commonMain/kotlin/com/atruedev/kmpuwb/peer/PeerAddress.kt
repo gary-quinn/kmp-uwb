@@ -10,7 +10,9 @@ package com.atruedev.kmpuwb.peer
  *
  * Uses content-based equality: two addresses with the same bytes are equal.
  */
-public class PeerAddress(private val bytes: ByteArray) {
+public class PeerAddress(bytes: ByteArray) {
+
+    private val bytes: ByteArray = bytes.copyOf()
 
     /** Number of bytes in the address. */
     public val size: Int get() = bytes.size
