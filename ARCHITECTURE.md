@@ -126,6 +126,14 @@ UWB measurements arrive at high frequency (~5 Hz). The pipeline is designed for 
 
 On Android, `scope.launch { startRangingWithPeer(peer) }` runs once when `start()` is called. The launched coroutine collects from `sessionScope.prepareSession()` and feeds results into the channel. This avoids the pitfall where each `collect()` call on `rangingResults` would create a new platform session.
 
+### Why No Zero-Copy Wrapper (unlike kmp-ble's BleData)
+
+kmp-ble wraps platform byte buffers in `BleData` to avoid `memcpy` on every characteristic notification — consumers `slice()` and `get()` into the original OS buffer. This works because BLE deals with arbitrary byte payloads at high frequency.
+
+UWB ranging data is fundamentally different: the platform delivers **primitives** (`Float` distance, `simd_float3` direction), not byte buffers. `Distance` and `Angle` are `@JvmInline value class` — zero allocation on JVM, no copy needed. A zero-copy wrapper would add complexity with no consumer use case.
+
+The one hot-path byte operation is iOS peer identity: `NIDiscoveryToken` → `PeerAddress` requires `NSKeyedArchiver` serialization. Since the token-to-address mapping is stable for a session's lifetime, we cache it per session (`DiscoveryTokenCache`) rather than re-serializing on every callback. This eliminates ~5 `NSKeyedArchiver` calls/sec per peer with no synchronization overhead — the cache is only accessed from Apple's delegate dispatch queue.
+
 ---
 
 ## Error Model

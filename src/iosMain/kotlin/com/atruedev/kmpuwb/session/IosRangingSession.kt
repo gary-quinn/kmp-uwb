@@ -58,6 +58,7 @@ internal class IosRangingSession(
 
     internal var niSession: NISession? = null
     private val delegate = SessionDelegate()
+    private val tokenCache = DiscoveryTokenCache()
 
     override suspend fun start(peer: Peer) {
         check(_state.value is RangingState.Idle.Ready) {
@@ -110,10 +111,7 @@ internal class IosRangingSession(
                         elevation = extractElevation(obj.direction),
                     )
 
-                val peer =
-                    Peer(
-                        address = PeerAddress.fromDiscoveryToken(obj.discoveryToken),
-                    )
+                val peer = Peer(address = tokenCache.resolve(obj.discoveryToken))
 
                 resultChannel.trySend(RangingResult.Position(peer, measurement))
             }
@@ -132,10 +130,7 @@ internal class IosRangingSession(
         ) {
             val removedObjects = didRemoveNearbyObjects.filterIsInstance<NINearbyObject>()
             for (obj in removedObjects) {
-                val peer =
-                    Peer(
-                        address = PeerAddress.fromDiscoveryToken(obj.discoveryToken),
-                    )
+                val peer = Peer(address = tokenCache.resolve(obj.discoveryToken))
                 resultChannel.trySend(RangingResult.PeerLost(peer))
             }
 
@@ -170,6 +165,26 @@ internal class IosRangingSession(
     }
 }
 
+/**
+ * Caches NIDiscoveryToken → PeerAddress mappings for the session's lifetime.
+ *
+ * NSKeyedArchiver serialization is expensive (~0.1ms). Without caching,
+ * it runs on every didUpdateNearbyObjects callback (~5Hz per peer).
+ * The token-to-address mapping is stable — the same token always produces
+ * the same bytes — so caching is safe.
+ *
+ * Thread safety: all delegate callbacks run on Apple's dispatch queue,
+ * and this cache is only accessed from those callbacks. No synchronization needed.
+ */
+private class DiscoveryTokenCache {
+    private val cache = mutableMapOf<NIDiscoveryToken, PeerAddress>()
+
+    fun resolve(token: NIDiscoveryToken): PeerAddress =
+        cache.getOrPut(token) {
+            PeerAddress(serializeDiscoveryToken(token))
+        }
+}
+
 private fun extractAzimuth(direction: Vector128): Angle? {
     val x = direction.getFloatAt(0)
     val z = direction.getFloatAt(2)
@@ -199,8 +214,6 @@ internal fun deserializeDiscoveryToken(bytes: ByteArray): NIDiscoveryToken {
     val data = bytes.toNSData()
     return NSKeyedUnarchiver.unarchiveObjectWithData(data) as NIDiscoveryToken
 }
-
-private fun PeerAddress.Companion.fromDiscoveryToken(token: NIDiscoveryToken): PeerAddress = PeerAddress(serializeDiscoveryToken(token))
 
 internal fun NSData.toByteArray(): ByteArray {
     val length = this.length.toInt()
