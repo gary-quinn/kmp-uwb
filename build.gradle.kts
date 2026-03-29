@@ -30,8 +30,14 @@ kotlin {
 
     android {
         namespace = "com.atruedev.kmpuwb"
-        compileSdk = libs.versions.androidCompileSdk.get().toInt()
-        minSdk = libs.versions.androidMinSdk.get().toInt()
+        compileSdk =
+            libs.versions.androidCompileSdk
+                .get()
+                .toInt()
+        minSdk =
+            libs.versions.androidMinSdk
+                .get()
+                .toInt()
 
         withHostTestBuilder {}.configure {}
     }

@@ -50,7 +50,8 @@ public data class ChipsetError(
     val code: Int,
     override val message: String,
     override val cause: Throwable? = null,
-) : RangingError, HardwareError
+) : RangingError,
+    HardwareError
 
 /** The requested feature is not supported by this device's UWB hardware. */
 public data class UnsupportedFeature(

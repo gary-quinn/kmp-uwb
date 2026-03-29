@@ -16,11 +16,10 @@ internal class JvmRangingSession(
     private val _state = MutableStateFlow<RangingState>(RangingState.Idle.Unsupported)
     override val state: StateFlow<RangingState> = _state.asStateFlow()
 
-    override suspend fun start(peer: Peer) {
+    override suspend fun start(peer: Peer): Unit =
         throw UnsupportedOperationException(
             "UWB ranging is not available on JVM. Use FakeRangingSession for testing.",
         )
-    }
 
     override val rangingResults: Flow<RangingResult> = emptyFlow()
 
