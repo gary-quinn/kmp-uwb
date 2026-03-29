@@ -9,6 +9,7 @@ internal class IosPreparedSession(
     override val config: RangingConfig,
 ) : PreparedSession {
     private val niSession = NISession()
+
     private var consumed: Boolean = false
 
     override val localParams: SessionParams by lazy {
@@ -22,16 +23,15 @@ internal class IosPreparedSession(
         check(!consumed) { "PreparedSession has already been consumed" }
         consumed = true
 
-        val session = IosRangingSession(config)
-        session.niSession = niSession
+        val session = IosRangingSession(config, existingSession = niSession)
         session.startPrepared(remoteParams)
         return session
     }
 
     override fun close() {
         if (!consumed) {
+            consumed = true
             niSession.invalidate()
         }
-        consumed = true
     }
 }

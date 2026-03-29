@@ -40,6 +40,7 @@ import platform.darwin.NSObject
 
 internal class IosRangingSession(
     override val config: RangingConfig,
+    existingSession: NISession? = null,
 ) : RangingSession {
     private val scope =
         CoroutineScope(
@@ -56,7 +57,7 @@ internal class IosRangingSession(
         )
     override val rangingResults: Flow<RangingResult> = resultChannel.receiveAsFlow()
 
-    internal var niSession: NISession? = null
+    private var niSession: NISession? = existingSession
     private val delegate = SessionDelegate()
     private val tokenCache = DiscoveryTokenCache()
 
@@ -80,14 +81,18 @@ internal class IosRangingSession(
         check(_state.value is RangingState.Idle.Ready) {
             "Cannot start session in state ${_state.value}"
         }
-        val session = niSession ?: error("NISession not initialized")
-        session.delegate = delegate
 
         _state.value = RangingState.Starting.Negotiating
-        _state.value = RangingState.Starting.Initializing
 
-        val peerToken = deserializeDiscoveryToken(remoteParams.toByteArray())
-        session.runWithConfiguration(NINearbyPeerConfiguration(peerToken))
+        scope.launch {
+            val session = niSession ?: error("NISession not initialized")
+            session.delegate = delegate
+
+            _state.value = RangingState.Starting.Initializing
+
+            val peerToken = deserializeDiscoveryToken(remoteParams.toByteArray())
+            session.runWithConfiguration(NINearbyPeerConfiguration(peerToken))
+        }
     }
 
     override fun close() {
@@ -188,6 +193,11 @@ private class DiscoveryTokenCache {
         }
 }
 
+/**
+ * NINearbyObject.direction is a simd_float3 mapped to [Vector128] in K/N.
+ * Coordinate system: x (index 0) = left/right, y (index 1) = up/down, z (index 2) = forward.
+ * Returns null when the direction vector is zero (device outside U1/U2 field of view).
+ */
 private fun extractAzimuth(direction: Vector128): Angle? {
     val x = direction.getFloatAt(0)
     val z = direction.getFloatAt(2)

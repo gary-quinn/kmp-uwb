@@ -24,13 +24,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import java.nio.ByteBuffer
 
 internal class AndroidPreparedSession(
     override val config: RangingConfig,
     private val context: Context,
     private val sessionScope: UwbClientSessionScope,
 ) : PreparedSession {
+    @Volatile
     private var consumed: Boolean = false
 
     override val localParams: SessionParams by lazy {
@@ -50,28 +50,9 @@ internal class AndroidPreparedSession(
         consumed = true
     }
 
-    private fun encodeLocalParams(): SessionParams {
-        val localAddress = sessionScope.localAddress.address
-        val complexChannel = resolveComplexChannel()
-        val sessionKey = config.sessionKey ?: byteArrayOf()
+    private fun encodeLocalParams(): SessionParams = SessionParams(sessionScope.localAddress.address)
 
-        val buffer = ByteBuffer.allocate(2 + 1 + 1 + 4 + sessionKey.size)
-        buffer.put(localAddress)
-        buffer.put(complexChannel.channel.toByte())
-        buffer.put(complexChannel.preambleIndex.toByte())
-        buffer.putInt(config.sessionId)
-        buffer.put(sessionKey)
-
-        return SessionParams(buffer.array())
-    }
-
-    private fun decodeRemoteParams(params: SessionParams): Peer {
-        val bytes = params.toByteArray()
-        require(bytes.size >= 4) { "Remote SessionParams too short: ${bytes.size} bytes" }
-
-        val peerAddress = PeerAddress(bytes.copyOfRange(0, 2))
-        return Peer(address = peerAddress)
-    }
+    private fun decodeRemoteParams(params: SessionParams): Peer = Peer(address = PeerAddress(params.toByteArray()))
 
     private fun resolveComplexChannel(): UwbComplexChannel =
         if (sessionScope is UwbControllerSessionScope) {
