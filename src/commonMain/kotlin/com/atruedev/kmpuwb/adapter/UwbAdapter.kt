@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.StateFlow
  * Obtain an instance via [UwbAdapter] factory function.
  */
 public interface UwbAdapter {
-
     /** Current state of the UWB adapter. Always-readable [StateFlow]. */
     public val state: StateFlow<UwbAdapterState>
 

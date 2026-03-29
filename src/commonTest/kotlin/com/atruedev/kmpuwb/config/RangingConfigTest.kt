@@ -7,14 +7,14 @@ import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
 
 class RangingConfigTest {
-
     @Test
     fun dslBuilderCreatesConfig() {
-        val config = rangingConfig {
-            role = RangingRole.CONTROLLER
-            angleOfArrival = false
-            channel = 5
-        }
+        val config =
+            rangingConfig {
+                role = RangingRole.CONTROLLER
+                angleOfArrival = false
+                channel = 5
+            }
 
         assertEquals(RangingRole.CONTROLLER, config.role)
         assertEquals(false, config.angleOfArrival)
@@ -55,19 +55,21 @@ class RangingConfigTest {
 
     @Test
     fun channel5IsValid() {
-        val config = rangingConfig {
-            role = RangingRole.CONTROLLER
-            channel = 5
-        }
+        val config =
+            rangingConfig {
+                role = RangingRole.CONTROLLER
+                channel = 5
+            }
         assertEquals(5, config.channel)
     }
 
     @Test
     fun channel9IsValid() {
-        val config = rangingConfig {
-            role = RangingRole.CONTROLLER
-            channel = 9
-        }
+        val config =
+            rangingConfig {
+                role = RangingRole.CONTROLLER
+                channel = 9
+            }
         assertEquals(9, config.channel)
     }
 }

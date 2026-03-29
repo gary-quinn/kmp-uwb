@@ -10,7 +10,6 @@ import com.atruedev.kmpuwb.ranging.RangingMeasurement
  * receive spatial measurements or peer lifecycle events.
  */
 public sealed interface RangingResult {
-
     /** The peer this result relates to. */
     public val peer: Peer
 

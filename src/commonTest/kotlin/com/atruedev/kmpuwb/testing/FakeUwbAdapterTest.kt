@@ -8,7 +8,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class FakeUwbAdapterTest {
-
     @Test
     fun defaultStateIsOn() {
         val adapter = FakeUwbAdapter()
@@ -38,19 +37,21 @@ class FakeUwbAdapterTest {
     }
 
     @Test
-    fun capabilitiesReturnNoneWhenUnsupported() = runTest {
-        val adapter = FakeUwbAdapter()
-        adapter.simulateUnsupported()
-        assertEquals(UwbCapabilities.NONE, adapter.capabilities())
-    }
+    fun capabilitiesReturnNoneWhenUnsupported() =
+        runTest {
+            val adapter = FakeUwbAdapter()
+            adapter.simulateUnsupported()
+            assertEquals(UwbCapabilities.NONE, adapter.capabilities())
+        }
 
     @Test
-    fun capabilitiesReturnDefaultWhenOn() = runTest {
-        val adapter = FakeUwbAdapter()
-        val capabilities = adapter.capabilities()
-        assertTrue(capabilities.angleOfArrivalSupported)
-        assertTrue(capabilities.supportedChannels.contains(9))
-    }
+    fun capabilitiesReturnDefaultWhenOn() =
+        runTest {
+            val adapter = FakeUwbAdapter()
+            val capabilities = adapter.capabilities()
+            assertTrue(capabilities.angleOfArrivalSupported)
+            assertTrue(capabilities.supportedChannels.contains(9))
+        }
 
     @Test
     fun customInitialState() {

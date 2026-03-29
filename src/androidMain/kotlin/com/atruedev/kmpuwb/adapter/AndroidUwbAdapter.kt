@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.asStateFlow
 internal class AndroidUwbAdapter(
     private val context: Context,
 ) : UwbAdapter {
-
     private val _state = MutableStateFlow(resolveAdapterState())
 
     override val state: StateFlow<UwbAdapterState> = _state.asStateFlow()

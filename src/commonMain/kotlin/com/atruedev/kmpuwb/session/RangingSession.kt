@@ -29,7 +29,6 @@ import kotlinx.coroutines.flow.StateFlow
  * ```
  */
 public interface RangingSession : AutoCloseable {
-
     /** Configuration this session was created with. */
     public val config: RangingConfig
 

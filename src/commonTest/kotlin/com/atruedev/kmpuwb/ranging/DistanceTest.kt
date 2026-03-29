@@ -6,7 +6,6 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class DistanceTest {
-
     @Test
     fun metersCreatesValidDistance() {
         val distance = Distance.meters(5.0)
