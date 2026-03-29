@@ -11,19 +11,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 @Composable
-fun RangingDemoScreen(viewModel: RangingDemoViewModel = viewModel { RangingDemoViewModel() }) {
-    val log by viewModel.log.collectAsState()
+fun RangingDemoScreen() {
+    val scope = remember { CoroutineScope(SupervisorJob() + Dispatchers.Main) }
+    val demo = remember { RangingDemo(scope) }
+    val log by demo.log.collectAsState()
 
-    DisposableEffect(viewModel) {
-        viewModel.start()
-        onDispose { viewModel.stop() }
+    DisposableEffect(Unit) {
+        demo.start()
+        onDispose { demo.stop() }
     }
 
     MaterialTheme {
@@ -40,7 +45,7 @@ fun RangingDemoScreen(viewModel: RangingDemoViewModel = viewModel { RangingDemoV
                 modifier = Modifier.padding(bottom = 12.dp),
             )
             Text(
-                text = log,
+                text = log.ifEmpty { "Initializing..." },
                 fontSize = 13.sp,
                 fontFamily = FontFamily.Monospace,
                 lineHeight = 18.sp,

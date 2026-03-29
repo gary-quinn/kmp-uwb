@@ -40,8 +40,6 @@ kotlin {
             implementation(compose.material3)
             @Suppress("DEPRECATION")
             implementation(compose.ui)
-            implementation(libs.lifecycle.viewmodel.compose)
-            implementation(libs.lifecycle.runtime.compose)
             implementation(libs.kotlinx.coroutines.core)
         }
         androidMain.dependencies {

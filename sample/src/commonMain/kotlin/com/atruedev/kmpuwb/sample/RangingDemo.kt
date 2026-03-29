@@ -1,7 +1,5 @@
 package com.atruedev.kmpuwb.sample
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.atruedev.kmpuwb.adapter.UwbAdapter
 import com.atruedev.kmpuwb.adapter.UwbAdapterState
 import com.atruedev.kmpuwb.config.RangingRole
@@ -13,28 +11,30 @@ import com.atruedev.kmpuwb.connector.startWithConnector
 import com.atruedev.kmpuwb.session.RangingResult
 import com.atruedev.kmpuwb.session.RangingSession
 import com.atruedev.kmpuwb.session.SessionParams
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class RangingDemoViewModel : ViewModel() {
+class RangingDemo(
+    private val scope: CoroutineScope,
+) {
     private val _log = MutableStateFlow("")
     val log: StateFlow<String> = _log.asStateFlow()
 
-    private var adapter: UwbAdapter? = null
     private var session: RangingSession? = null
     private var rangingJob: Job? = null
 
     fun start() {
-        viewModelScope.launch {
+        scope.launch {
             try {
-                val uwbAdapter = UwbAdapter()
-                adapter = uwbAdapter
+                val adapter = UwbAdapter()
                 appendLog("UWB adapter created")
-                observeAdapterState(uwbAdapter)
-                checkCapabilitiesAndRange(uwbAdapter)
+                observeAdapterState(adapter)
+                checkCapabilitiesAndRange(adapter)
             } catch (e: Exception) {
                 appendLog("UWB not available: ${e.message}")
             }
@@ -45,10 +45,11 @@ class RangingDemoViewModel : ViewModel() {
         rangingJob?.cancel()
         session?.close()
         session = null
+        scope.cancel()
     }
 
     private fun observeAdapterState(adapter: UwbAdapter) {
-        viewModelScope.launch {
+        scope.launch {
             adapter.state.collect { state ->
                 when (state) {
                     UwbAdapterState.ON -> appendLog("UWB adapter: ready")
@@ -99,14 +100,14 @@ class RangingDemoViewModel : ViewModel() {
     private fun observeSession() {
         val currentSession = session ?: return
 
-        viewModelScope.launch {
+        scope.launch {
             currentSession.state.collect { state ->
                 appendLog("State: $state")
             }
         }
 
         rangingJob =
-            viewModelScope.launch {
+            scope.launch {
                 currentSession.rangingResults.collect { result ->
                     logResult(result)
                 }
