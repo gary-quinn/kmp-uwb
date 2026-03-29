@@ -10,8 +10,8 @@ let package = Package(
     targets: [
         .binaryTarget(
             name: "KmpUwb",
-            url: "https://github.com/gary-quinn/kmp-uwb/releases/download/v0.1.0/KmpUwb.xcframework.zip",
-            checksum: "24490fd693ed22846d9fec307611acf82051b4aeec19357167c075bd3016b365"
+            url: "https://github.com/gary-quinn/kmp-uwb/releases/download/v0.1.1/KmpUwb.xcframework.zip",
+            checksum: "ff2489ed51e15347d0447eb15e640b09da6bce3a8f9b0b3a6e90da1d4725a8b7"
         ),
     ]
 )
