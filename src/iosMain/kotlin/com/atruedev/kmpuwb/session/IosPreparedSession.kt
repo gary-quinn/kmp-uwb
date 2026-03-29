@@ -3,11 +3,6 @@
 package com.atruedev.kmpuwb.session
 
 import com.atruedev.kmpuwb.config.RangingConfig
-import com.atruedev.kmpuwb.peer.Peer
-import kotlinx.cinterop.addressOf
-import kotlinx.cinterop.usePinned
-import platform.Foundation.NSData
-import platform.Foundation.NSKeyedArchiver
 import platform.NearbyInteraction.NISession
 
 internal class IosPreparedSession(
@@ -19,17 +14,22 @@ internal class IosPreparedSession(
     override val localParams: SessionParams by lazy {
         val token =
             niSession.discoveryToken
-                ?: error("NISession.discoveryToken is null — device may not support UWB")
-        val data: NSData = NSKeyedArchiver.archivedDataWithRootObject(token)
-        SessionParams(data.toByteArray())
+                ?: error("NISession.discoveryToken unavailable — device may not support UWB")
+        SessionParams(serializeDiscoveryToken(token))
     }
 
-    override suspend fun startRanging(remotePeer: Peer): RangingSession {
+    override suspend fun startRanging(remoteParams: SessionParams): RangingSession {
         check(!consumed) { "PreparedSession has already been consumed" }
         consumed = true
 
-        val session = IosRangingSession.fromPrepared(config, niSession)
-        session.start(remotePeer)
+        val session = IosRangingSession(config)
+        session.niSession = niSession
+        session.start(
+            com.atruedev.kmpuwb.peer.Peer(
+                address = com.atruedev.kmpuwb.peer.PeerAddress(remoteParams.toByteArray()),
+            ),
+        )
+        session.startWithRemoteToken(remoteParams)
         return session
     }
 
@@ -38,15 +38,5 @@ internal class IosPreparedSession(
             niSession.invalidate()
         }
         consumed = true
-    }
-
-    private fun NSData.toByteArray(): ByteArray {
-        val length = this.length.toInt()
-        if (length == 0) return byteArrayOf()
-        val bytes = ByteArray(length)
-        bytes.usePinned { pinned ->
-            platform.posix.memcpy(pinned.addressOf(0), this.bytes, this.length)
-        }
-        return bytes
     }
 }

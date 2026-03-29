@@ -1,7 +1,6 @@
 package com.atruedev.kmpuwb.testing
 
-import com.atruedev.kmpuwb.peer.Peer
-import com.atruedev.kmpuwb.peer.PeerAddress
+import com.atruedev.kmpuwb.session.SessionParams
 import com.atruedev.kmpuwb.state.RangingState
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -12,7 +11,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class FakePreparedSessionTest {
-    private val testPeer = Peer(address = PeerAddress(byteArrayOf(0x0A, 0x0B)))
+    private val remoteParams = SessionParams(byteArrayOf(0x0A, 0x0B))
 
     @Test
     fun startRangingSetsFlags() =
@@ -20,17 +19,17 @@ class FakePreparedSessionTest {
             val prepared = FakePreparedSession()
             assertFalse(prepared.startRangingCalled)
 
-            prepared.startRanging(testPeer)
+            prepared.startRanging(remoteParams)
 
             assertTrue(prepared.startRangingCalled)
-            assertEquals(testPeer, prepared.lastRemotePeer)
+            assertEquals(remoteParams, prepared.lastRemoteParams)
         }
 
     @Test
     fun startRangingReturnsActiveSession() =
         runTest {
             val prepared = FakePreparedSession()
-            val session = prepared.startRanging(testPeer)
+            val session = prepared.startRanging(remoteParams)
             assertIs<RangingState.Active.Ranging>(session.state.value)
         }
 
@@ -38,10 +37,10 @@ class FakePreparedSessionTest {
     fun doubleStartRangingThrows() =
         runTest {
             val prepared = FakePreparedSession()
-            prepared.startRanging(testPeer)
+            prepared.startRanging(remoteParams)
 
             assertFailsWith<IllegalStateException> {
-                prepared.startRanging(testPeer)
+                prepared.startRanging(remoteParams)
             }
         }
 
@@ -60,7 +59,7 @@ class FakePreparedSessionTest {
             prepared.close()
 
             assertFailsWith<IllegalStateException> {
-                prepared.startRanging(testPeer)
+                prepared.startRanging(remoteParams)
             }
         }
 

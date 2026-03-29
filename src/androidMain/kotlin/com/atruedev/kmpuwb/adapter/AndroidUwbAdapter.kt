@@ -26,12 +26,15 @@ internal class AndroidUwbAdapter(
         return try {
             val uwbManager = UwbManager.createInstance(context)
             val controllerSession = uwbManager.controllerSessionScope()
+            val capabilities = controllerSession.rangingCapabilities
+
+            val roles = setOf(RangingRole.CONTROLLER, RangingRole.CONTROLEE)
 
             UwbCapabilities(
-                supportedRoles = setOf(RangingRole.CONTROLLER, RangingRole.CONTROLEE),
-                angleOfArrivalSupported = controllerSession.rangingCapabilities.isAzimuthalAngleSupported,
-                supportedChannels = controllerSession.rangingCapabilities.supportedChannels.toSet(),
-                backgroundRangingSupported = controllerSession.rangingCapabilities.isBackgroundRangingSupported,
+                supportedRoles = roles,
+                angleOfArrivalSupported = capabilities.isAzimuthalAngleSupported,
+                supportedChannels = capabilities.supportedChannels.toSet(),
+                backgroundRangingSupported = capabilities.isBackgroundRangingSupported,
             )
         } catch (_: Exception) {
             UwbCapabilities.NONE

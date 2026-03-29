@@ -1,49 +1,41 @@
 package com.atruedev.kmpuwb.testing
 
 import com.atruedev.kmpuwb.config.RangingConfig
-import com.atruedev.kmpuwb.peer.Peer
 import com.atruedev.kmpuwb.session.PreparedSession
 import com.atruedev.kmpuwb.session.RangingSession
 import com.atruedev.kmpuwb.session.SessionParams
 
 /**
  * Test double for [PreparedSession] with verification flags.
- *
- * ```kotlin
- * val prepared = FakePreparedSession()
- * val session = prepared.startRanging(peer)
- * assertTrue(prepared.startRangingCalled)
- * assertEquals(peer, prepared.lastRemotePeer)
- * ```
  */
 public class FakePreparedSession(
     override val config: RangingConfig = FakeRangingSession.DEFAULT_CONFIG,
     override val localParams: SessionParams = DEFAULT_LOCAL_PARAMS,
-    private val sessionFactory: (RangingConfig) -> RangingSession = { FakeRangingSession(it) },
+    private val sessionFactory: (RangingConfig) -> FakeRangingSession = { FakeRangingSession(it) },
 ) : PreparedSession {
-    /** Whether [startRanging] has been called. */
     public var startRangingCalled: Boolean = false
         private set
 
-    /** The last remote peer passed to [startRanging]. */
-    public var lastRemotePeer: Peer? = null
+    public var lastRemoteParams: SessionParams? = null
         private set
 
-    /** Whether [close] has been called. */
     public var closeCalled: Boolean = false
         private set
 
     private var consumed: Boolean = false
 
-    override suspend fun startRanging(remotePeer: Peer): RangingSession {
+    override suspend fun startRanging(remoteParams: SessionParams): RangingSession {
         check(!consumed) { "PreparedSession has already been consumed" }
         consumed = true
         startRangingCalled = true
-        lastRemotePeer = remotePeer
+        lastRemoteParams = remoteParams
+
         val session = sessionFactory(config)
-        if (session is FakeRangingSession) {
-            session.start(remotePeer)
-        }
+        session.start(
+            com.atruedev.kmpuwb.peer.Peer(
+                address = com.atruedev.kmpuwb.peer.PeerAddress(remoteParams.toByteArray()),
+            ),
+        )
         return session
     }
 
