@@ -13,25 +13,23 @@ import kotlinx.coroutines.flow.emptyFlow
 internal class JvmRangingSession(
     override val config: RangingConfig,
 ) : RangingSession {
-
     private val _state = MutableStateFlow<RangingState>(RangingState.Idle.Unsupported)
     override val state: StateFlow<RangingState> = _state.asStateFlow()
 
     override suspend fun start(peer: Peer) {
         throw UnsupportedOperationException(
-            "UWB ranging is not available on JVM. " +
-                "Use FakeRangingSession for testing.",
+            "UWB ranging is not available on JVM. Use FakeRangingSession for testing.",
         )
     }
 
     override val rangingResults: Flow<RangingResult> = emptyFlow()
 
     override fun close() {
-        _state.value = RangingState.Stopped.ByError(
-            UwbUnavailable("UWB is not available on JVM"),
-        )
+        _state.value =
+            RangingState.Stopped.ByError(
+                UwbUnavailable("UWB is not available on JVM"),
+            )
     }
 }
 
-public actual fun RangingSession(config: RangingConfig): RangingSession =
-    JvmRangingSession(config)
+public actual fun RangingSession(config: RangingConfig): RangingSession = JvmRangingSession(config)

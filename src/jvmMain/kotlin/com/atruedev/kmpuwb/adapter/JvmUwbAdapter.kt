@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 internal class JvmUwbAdapter : UwbAdapter {
-
     override val state: StateFlow<UwbAdapterState> =
         MutableStateFlow(UwbAdapterState.UNSUPPORTED).asStateFlow()
 
