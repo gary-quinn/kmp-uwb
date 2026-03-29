@@ -45,15 +45,13 @@ class RangingDemo(
     }
 
     private fun observeAdapterState() {
-        adapter.state
-            .onEach { state ->
-                when (state) {
-                    UwbAdapterState.ON -> log("UWB adapter: ready")
-                    UwbAdapterState.OFF -> log("UWB adapter: disabled")
-                    UwbAdapterState.UNSUPPORTED -> log("UWB adapter: no hardware")
-                }
+        adapter.state.onEach { state ->
+            when (state) {
+                UwbAdapterState.ON -> log("UWB adapter: ready")
+                UwbAdapterState.OFF -> log("UWB adapter: disabled")
+                UwbAdapterState.UNSUPPORTED -> log("UWB adapter: no hardware")
             }
-            .launchIn(scope)
+        }.launchIn(scope)
     }
 
     private suspend fun checkCapabilitiesAndRange() {
