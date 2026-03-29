@@ -12,6 +12,7 @@ import com.atruedev.kmpuwb.session.RangingResult
 import com.atruedev.kmpuwb.session.RangingSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -45,13 +46,15 @@ class RangingDemo(
     }
 
     private fun observeAdapterState() {
-        adapter.state.onEach { state ->
-            when (state) {
-                UwbAdapterState.ON -> log("UWB adapter: ready")
-                UwbAdapterState.OFF -> log("UWB adapter: disabled")
-                UwbAdapterState.UNSUPPORTED -> log("UWB adapter: no hardware")
+        scope.launch {
+            adapter.state.collect { state ->
+                when (state) {
+                    UwbAdapterState.ON -> log("UWB adapter: ready")
+                    UwbAdapterState.OFF -> log("UWB adapter: disabled")
+                    UwbAdapterState.UNSUPPORTED -> log("UWB adapter: no hardware")
+                }
             }
-        }.launchIn(scope)
+        }
     }
 
     private suspend fun checkCapabilitiesAndRange() {
