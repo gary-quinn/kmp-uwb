@@ -7,8 +7,13 @@ set -euo pipefail
 # Usage: generate-changelog.sh <prev_tag> <current_tag>
 # Output: writes changelog entries to /tmp/changelog_entries.txt
 
-PREV_TAG="${1:?Usage: generate-changelog.sh <prev_tag> <current_tag>}"
+PREV_TAG="${1:-}"
 TAG="${2:?Usage: generate-changelog.sh <prev_tag> <current_tag>}"
+
+if [ -z "$PREV_TAG" ]; then
+  # First release — no previous tag, use full history
+  PREV_TAG=$(git rev-list --max-parents=0 HEAD | head -1)
+fi
 
 ADDED=""
 CHANGED=""
