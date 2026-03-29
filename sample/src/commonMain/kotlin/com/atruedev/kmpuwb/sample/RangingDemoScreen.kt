@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -32,24 +33,26 @@ fun RangingDemoScreen() {
     }
 
     MaterialTheme {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-                    .verticalScroll(rememberScrollState()),
-        ) {
-            Text(
-                text = "kmp-uwb Ranging Demo",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 12.dp),
-            )
-            Text(
-                text = log.ifEmpty { "Initializing..." },
-                fontSize = 13.sp,
-                fontFamily = FontFamily.Monospace,
-                lineHeight = 18.sp,
-            )
+        Surface(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                        .verticalScroll(rememberScrollState()),
+            ) {
+                Text(
+                    text = "kmp-uwb Ranging Demo",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 12.dp),
+                )
+                Text(
+                    text = log.ifEmpty { "Initializing..." },
+                    fontSize = 13.sp,
+                    fontFamily = FontFamily.Monospace,
+                    lineHeight = 18.sp,
+                )
+            }
         }
     }
 }
