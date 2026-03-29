@@ -30,7 +30,7 @@ Part of the **kmp** library family alongside [kmp-ble](https://github.com/gary-q
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("com.atruedev:kmp-uwb:0.1.0-alpha2")
+            implementation("com.atruedev:kmp-uwb:0.1.0")
         }
     }
 }
