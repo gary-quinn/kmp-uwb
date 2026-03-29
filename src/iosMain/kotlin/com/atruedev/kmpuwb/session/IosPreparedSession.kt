@@ -3,6 +3,8 @@
 package com.atruedev.kmpuwb.session
 
 import com.atruedev.kmpuwb.config.RangingConfig
+import com.atruedev.kmpuwb.peer.Peer
+import com.atruedev.kmpuwb.peer.PeerAddress
 import platform.NearbyInteraction.NISession
 
 internal class IosPreparedSession(
@@ -24,11 +26,12 @@ internal class IosPreparedSession(
 
         val session = IosRangingSession(config)
         session.niSession = niSession
-        session.start(
-            com.atruedev.kmpuwb.peer.Peer(
-                address = com.atruedev.kmpuwb.peer.PeerAddress(remoteParams.toByteArray()),
-            ),
-        )
+
+        val peer =
+            Peer(
+                address = PeerAddress(remoteParams.toByteArray()),
+            )
+        session.start(peer)
         session.startWithRemoteToken(remoteParams)
         return session
     }
