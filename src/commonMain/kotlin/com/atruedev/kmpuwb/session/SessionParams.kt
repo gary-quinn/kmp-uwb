@@ -10,7 +10,9 @@ package com.atruedev.kmpuwb.session
  * from [PreparedSession.localParams] and exchange them with the remote peer over
  * any out-of-band transport (BLE, NFC, WiFi, etc.).
  */
-public class SessionParams(bytes: ByteArray) {
+public class SessionParams(
+    bytes: ByteArray,
+) {
     private val bytes: ByteArray = bytes.copyOf()
 
     /** Size of the encoded session parameters in bytes. */
