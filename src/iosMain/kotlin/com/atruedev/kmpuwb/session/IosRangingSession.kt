@@ -38,18 +38,19 @@ import platform.darwin.NSObject
 internal class IosRangingSession(
     override val config: RangingConfig,
 ) : RangingSession {
-
-    private val scope = CoroutineScope(
-        SupervisorJob() + Dispatchers.Default.limitedParallelism(1),
-    )
+    private val scope =
+        CoroutineScope(
+            SupervisorJob() + Dispatchers.Default.limitedParallelism(1),
+        )
 
     private val _state = MutableStateFlow<RangingState>(RangingState.Idle.Ready)
     override val state: StateFlow<RangingState> = _state.asStateFlow()
 
-    private val resultChannel = Channel<RangingResult>(
-        capacity = 64,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
-    )
+    private val resultChannel =
+        Channel<RangingResult>(
+            capacity = 64,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        )
     override val rangingResults: Flow<RangingResult> = resultChannel.receiveAsFlow()
 
     private var niSession: NISession? = null
@@ -63,9 +64,10 @@ internal class IosRangingSession(
         _state.value = RangingState.Starting.Negotiating
 
         scope.launch {
-            niSession = NISession().apply {
-                this.delegate = this@IosRangingSession.delegate
-            }
+            niSession =
+                NISession().apply {
+                    this.delegate = this@IosRangingSession.delegate
+                }
 
             _state.value = RangingState.Starting.Initializing
         }
@@ -83,19 +85,23 @@ internal class IosRangingSession(
 
     @Suppress("CONFLICTING_OVERLOADS")
     private inner class SessionDelegate : NSObject(), NISessionDelegateProtocol {
-
-        override fun session(session: NISession, didUpdateNearbyObjects: List<*>) {
+        override fun session(
+            session: NISession,
+            didUpdateNearbyObjects: List<*>,
+        ) {
             val nearbyObjects = didUpdateNearbyObjects.filterIsInstance<NINearbyObject>()
             for (obj in nearbyObjects) {
-                val measurement = RangingMeasurement(
-                    distance = Distance.meters(obj.distance.toDouble()),
-                    azimuth = extractAzimuth(obj.direction),
-                    elevation = extractElevation(obj.direction),
-                )
+                val measurement =
+                    RangingMeasurement(
+                        distance = Distance.meters(obj.distance.toDouble()),
+                        azimuth = extractAzimuth(obj.direction),
+                        elevation = extractElevation(obj.direction),
+                    )
 
-                val peer = Peer(
-                    address = PeerAddress.fromDiscoveryToken(obj.discoveryToken),
-                )
+                val peer =
+                    Peer(
+                        address = PeerAddress.fromDiscoveryToken(obj.discoveryToken),
+                    )
 
                 resultChannel.trySend(RangingResult.Position(peer, measurement))
             }
@@ -114,9 +120,10 @@ internal class IosRangingSession(
         ) {
             val removedObjects = didRemoveNearbyObjects.filterIsInstance<NINearbyObject>()
             for (obj in removedObjects) {
-                val peer = Peer(
-                    address = PeerAddress.fromDiscoveryToken(obj.discoveryToken),
-                )
+                val peer =
+                    Peer(
+                        address = PeerAddress.fromDiscoveryToken(obj.discoveryToken),
+                    )
                 resultChannel.trySend(RangingResult.PeerLost(peer))
             }
 
@@ -135,9 +142,10 @@ internal class IosRangingSession(
             session: NISession,
             didInvalidateWithError: platform.Foundation.NSError,
         ) {
-            val error = SessionLost(
-                message = "NearbyInteraction session invalidated: ${didInvalidateWithError.localizedDescription}",
-            )
+            val error =
+                SessionLost(
+                    message = "NearbyInteraction session invalidated: ${didInvalidateWithError.localizedDescription}",
+                )
             scope.launch { _state.value = RangingState.Stopped.ByError(error) }
             resultChannel.close()
         }
@@ -201,5 +209,4 @@ private fun NSData.toByteArray(): ByteArray {
     return bytes
 }
 
-public actual fun RangingSession(config: RangingConfig): RangingSession =
-    IosRangingSession(config)
+public actual fun RangingSession(config: RangingConfig): RangingSession = IosRangingSession(config)

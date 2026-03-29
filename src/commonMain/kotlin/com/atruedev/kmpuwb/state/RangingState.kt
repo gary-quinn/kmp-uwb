@@ -15,7 +15,6 @@ import com.atruedev.kmpuwb.error.UwbError
  * Any non-terminal state can transition to [Stopped] on error.
  */
 public sealed interface RangingState {
-
     /** Session exists but has not started ranging. */
     public sealed interface Idle : RangingState {
         /** Ready to start. */

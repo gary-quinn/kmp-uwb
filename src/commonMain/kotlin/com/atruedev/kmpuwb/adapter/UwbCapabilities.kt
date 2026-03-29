@@ -20,11 +20,12 @@ public data class UwbCapabilities(
 ) {
     public companion object {
         /** Capabilities for a device with no UWB support. */
-        public val NONE: UwbCapabilities = UwbCapabilities(
-            supportedRoles = emptySet(),
-            angleOfArrivalSupported = false,
-            supportedChannels = emptySet(),
-            backgroundRangingSupported = false,
-        )
+        public val NONE: UwbCapabilities =
+            UwbCapabilities(
+                supportedRoles = emptySet(),
+                angleOfArrivalSupported = false,
+                supportedChannels = emptySet(),
+                backgroundRangingSupported = false,
+            )
     }
 }
