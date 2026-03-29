@@ -11,6 +11,14 @@ _Changes on `main` that have not yet been tagged for release._
 
 ---
 
+## [0.1.1] - 2026-03-29
+
+### Added
+- feat: add peer connector and sample ranging demo
+
+
+---
+
 ## [0.1.0] - 2026-03-29
 
 ### Added
@@ -35,6 +43,7 @@ _Changes on `main` that have not yet been tagged for release._
 - docs: add README, ARCHITECTURE, and ROADMAP
 
 
-[Unreleased]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.0-alpha2...v0.1.1
 [0.1.0]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.0-alpha2...v0.1.0
 [0.1.0-alpha2]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.0-alpha1...v0.1.0-alpha2
