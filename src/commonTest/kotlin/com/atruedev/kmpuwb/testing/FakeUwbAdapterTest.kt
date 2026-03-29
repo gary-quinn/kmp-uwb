@@ -1,5 +1,6 @@
 package com.atruedev.kmpuwb.testing
 
+import app.cash.turbine.test
 import com.atruedev.kmpuwb.adapter.UwbAdapterState
 import com.atruedev.kmpuwb.adapter.UwbCapabilities
 import kotlinx.coroutines.test.runTest
@@ -15,26 +16,23 @@ class FakeUwbAdapterTest {
     }
 
     @Test
-    fun simulateDisabledChangesState() {
-        val adapter = FakeUwbAdapter()
-        adapter.simulateDisabled()
-        assertEquals(UwbAdapterState.OFF, adapter.state.value)
-    }
+    fun stateTransitionSequence() =
+        runTest {
+            val adapter = FakeUwbAdapter()
 
-    @Test
-    fun simulateEnabledChangesState() {
-        val adapter = FakeUwbAdapter()
-        adapter.simulateDisabled()
-        adapter.simulateEnabled()
-        assertEquals(UwbAdapterState.ON, adapter.state.value)
-    }
+            adapter.state.test {
+                assertEquals(UwbAdapterState.ON, awaitItem())
 
-    @Test
-    fun simulateUnsupportedChangesState() {
-        val adapter = FakeUwbAdapter()
-        adapter.simulateUnsupported()
-        assertEquals(UwbAdapterState.UNSUPPORTED, adapter.state.value)
-    }
+                adapter.simulateDisabled()
+                assertEquals(UwbAdapterState.OFF, awaitItem())
+
+                adapter.simulateUnsupported()
+                assertEquals(UwbAdapterState.UNSUPPORTED, awaitItem())
+
+                adapter.simulateEnabled()
+                assertEquals(UwbAdapterState.ON, awaitItem())
+            }
+        }
 
     @Test
     fun capabilitiesReturnNoneWhenUnsupported() =
@@ -54,8 +52,12 @@ class FakeUwbAdapterTest {
         }
 
     @Test
-    fun customInitialState() {
-        val adapter = FakeUwbAdapter(initialState = UwbAdapterState.OFF)
-        assertEquals(UwbAdapterState.OFF, adapter.state.value)
-    }
+    fun customInitialState() =
+        runTest {
+            val adapter = FakeUwbAdapter(initialState = UwbAdapterState.OFF)
+
+            adapter.state.test {
+                assertEquals(UwbAdapterState.OFF, awaitItem())
+            }
+        }
 }
