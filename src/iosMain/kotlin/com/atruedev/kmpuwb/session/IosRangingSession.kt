@@ -76,15 +76,18 @@ internal class IosRangingSession(
         }
     }
 
-    /**
-     * Start ranging with a remote peer's discovery token.
-     * Decodes the token from [SessionParams] and calls [NISession.runWithConfiguration].
-     */
-    internal fun startWithRemoteToken(remoteParams: SessionParams) {
+    internal fun startPrepared(remoteParams: SessionParams) {
+        check(_state.value is RangingState.Idle.Ready) {
+            "Cannot start session in state ${_state.value}"
+        }
         val session = niSession ?: error("NISession not initialized")
+        session.delegate = delegate
+
+        _state.value = RangingState.Starting.Negotiating
+        _state.value = RangingState.Starting.Initializing
+
         val peerToken = deserializeDiscoveryToken(remoteParams.toByteArray())
-        val configuration = NINearbyPeerConfiguration(peerToken)
-        session.runWithConfiguration(configuration)
+        session.runWithConfiguration(NINearbyPeerConfiguration(peerToken))
     }
 
     override fun close() {

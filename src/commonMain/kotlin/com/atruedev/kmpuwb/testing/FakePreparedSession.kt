@@ -1,6 +1,8 @@
 package com.atruedev.kmpuwb.testing
 
 import com.atruedev.kmpuwb.config.RangingConfig
+import com.atruedev.kmpuwb.peer.Peer
+import com.atruedev.kmpuwb.peer.PeerAddress
 import com.atruedev.kmpuwb.session.PreparedSession
 import com.atruedev.kmpuwb.session.RangingSession
 import com.atruedev.kmpuwb.session.SessionParams
@@ -31,11 +33,7 @@ public class FakePreparedSession(
         lastRemoteParams = remoteParams
 
         val session = sessionFactory(config)
-        session.start(
-            com.atruedev.kmpuwb.peer.Peer(
-                address = com.atruedev.kmpuwb.peer.PeerAddress(remoteParams.toByteArray()),
-            ),
-        )
+        session.start(Peer(address = PeerAddress(remoteParams.toByteArray())))
         return session
     }
 
