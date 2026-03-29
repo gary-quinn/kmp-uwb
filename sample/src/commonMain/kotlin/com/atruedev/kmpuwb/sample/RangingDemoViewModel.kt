@@ -1,5 +1,7 @@
 package com.atruedev.kmpuwb.sample
 
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.atruedev.kmpuwb.adapter.UwbAdapter
 import com.atruedev.kmpuwb.adapter.UwbAdapterState
 import com.atruedev.kmpuwb.config.RangingRole
@@ -10,33 +12,24 @@ import com.atruedev.kmpuwb.connector.PeerConnector
 import com.atruedev.kmpuwb.connector.startWithConnector
 import com.atruedev.kmpuwb.session.RangingResult
 import com.atruedev.kmpuwb.session.RangingSession
-import kotlinx.coroutines.CoroutineScope
+import com.atruedev.kmpuwb.session.SessionParams
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-/**
- * Demonstrates the full kmp-uwb API surface:
- * adapter state -> capabilities -> prepareSession -> OOB exchange -> ranging.
- *
- * Platform entry points (Android Activity, iOS ViewController) create a
- * [RangingDemo] with a scope and a [PeerConnector] implementation that
- * handles the OOB transport (BLE, NFC, etc.).
- */
-class RangingDemo(
-    private val scope: CoroutineScope,
-    private val connector: PeerConnector,
-    private val log: (String) -> Unit,
-) {
+class RangingDemoViewModel : ViewModel() {
     private val adapter = UwbAdapter()
+    private val _log = MutableStateFlow("")
+    val log: StateFlow<String> = _log.asStateFlow()
+
     private var session: RangingSession? = null
     private var rangingJob: Job? = null
 
     fun start() {
         observeAdapterState()
-        scope.launch { checkCapabilitiesAndRange() }
+        viewModelScope.launch { checkCapabilitiesAndRange() }
     }
 
     fun stop() {
@@ -46,12 +39,12 @@ class RangingDemo(
     }
 
     private fun observeAdapterState() {
-        scope.launch {
+        viewModelScope.launch {
             adapter.state.collect { state ->
                 when (state) {
-                    UwbAdapterState.ON -> log("UWB adapter: ready")
-                    UwbAdapterState.OFF -> log("UWB adapter: disabled")
-                    UwbAdapterState.UNSUPPORTED -> log("UWB adapter: no hardware")
+                    UwbAdapterState.ON -> appendLog("UWB adapter: ready")
+                    UwbAdapterState.OFF -> appendLog("UWB adapter: disabled")
+                    UwbAdapterState.UNSUPPORTED -> appendLog("UWB adapter: no hardware")
                 }
             }
         }
@@ -59,15 +52,15 @@ class RangingDemo(
 
     private suspend fun checkCapabilitiesAndRange() {
         if (adapter.state.value != UwbAdapterState.ON) {
-            log("UWB not available — skipping ranging")
+            appendLog("UWB not available — skipping ranging")
             return
         }
 
-        val capabilities = adapter.capabilities()
-        log(
-            "Capabilities: roles=${capabilities.supportedRoles}, " +
-                "AoA=${capabilities.angleOfArrivalSupported}, " +
-                "channels=${capabilities.supportedChannels}",
+        val caps = adapter.capabilities()
+        appendLog(
+            "Capabilities: roles=${caps.supportedRoles}, " +
+                "AoA=${caps.angleOfArrivalSupported}, " +
+                "channels=${caps.supportedChannels}",
         )
 
         startRanging()
@@ -83,42 +76,55 @@ class RangingDemo(
             }
 
         try {
-            log("Preparing session...")
-            session = adapter.startWithConnector(config, connector)
-            log("Ranging started")
+            appendLog("Preparing session...")
+            session = adapter.startWithConnector(config, stubConnector())
+            appendLog("Ranging started")
             observeSession()
         } catch (e: ConnectorException) {
-            log("OOB exchange failed: ${e.error.message}")
+            appendLog("OOB exchange failed: ${e.error.message}")
         }
     }
 
     private fun observeSession() {
         val currentSession = session ?: return
 
-        currentSession.state
-            .onEach { state -> log("State: $state") }
-            .launchIn(scope)
+        viewModelScope.launch {
+            currentSession.state.collect { state ->
+                appendLog("State: $state")
+            }
+        }
 
         rangingJob =
-            currentSession.rangingResults
-                .onEach { result -> logResult(result) }
-                .launchIn(scope)
+            viewModelScope.launch {
+                currentSession.rangingResults.collect { result ->
+                    logResult(result)
+                }
+            }
     }
 
     private fun logResult(result: RangingResult) {
         when (result) {
             is RangingResult.Position -> {
                 val m = result.measurement
-                log(
+                appendLog(
                     "Position: ${m.distance} " +
                         "azimuth=${m.azimuth ?: "n/a"} " +
                         "elevation=${m.elevation ?: "n/a"}",
                 )
             }
             is RangingResult.PeerLost ->
-                log("Peer lost: ${result.peer.address}")
+                appendLog("Peer lost: ${result.peer.address}")
             is RangingResult.PeerRecovered ->
-                log("Peer recovered: ${result.peer.address} at ${result.measurement.distance}")
+                appendLog("Peer recovered: ${result.peer.address} at ${result.measurement.distance}")
         }
     }
+
+    private fun appendLog(message: String) {
+        _log.value += "$message\n"
+    }
 }
+
+private fun stubConnector() =
+    PeerConnector { localParams ->
+        SessionParams(localParams.toByteArray())
+    }
