@@ -8,10 +8,10 @@ let package = Package(
         .library(name: "KmpUwb", targets: ["KmpUwb"]),
     ],
     targets: [
-        // Placeholder — updated automatically by the publish workflow
         .binaryTarget(
             name: "KmpUwb",
-            path: "KmpUwb.xcframework"
+            url: "https://github.com/gary-quinn/kmp-uwb/releases/download/v0.1.0-alpha1/KmpUwb.xcframework.zip",
+            checksum: "a5b6d9595856c89e6c621a9ff35fbc1ad4730fbbb28064190557e79c104da2c6"
         ),
     ]
 )
