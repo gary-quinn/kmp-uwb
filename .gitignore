@@ -17,6 +17,9 @@ local.properties
 *.kotlin_module
 .kotlin/
 
+# Gradle daemon JVM config (machine-specific, auto-generated)
+gradle/gradle-daemon-jvm.properties
+
 # Swift Package Manager
 .build/
 .swiftpm/

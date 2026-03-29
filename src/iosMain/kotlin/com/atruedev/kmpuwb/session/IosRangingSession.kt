@@ -68,13 +68,14 @@ internal class IosRangingSession(
 
         _state.value = RangingState.Starting.Negotiating
 
-        scope.launch {
-            val session = niSession ?: NISession()
-            session.delegate = delegate
-            niSession = session
+        val session = niSession ?: NISession()
+        niSession = session
 
-            _state.value = RangingState.Starting.Initializing
+        platform.darwin.dispatch_async(platform.darwin.dispatch_get_main_queue()) {
+            session.delegate = delegate
         }
+
+        _state.value = RangingState.Starting.Initializing
     }
 
     internal fun startPrepared(remoteParams: SessionParams) {
@@ -84,14 +85,17 @@ internal class IosRangingSession(
 
         _state.value = RangingState.Starting.Negotiating
 
-        scope.launch {
-            val session = niSession ?: error("NISession not initialized")
-            session.delegate = delegate
+        val session = niSession ?: error("NISession not initialized")
+        session.delegate = delegate
 
-            _state.value = RangingState.Starting.Initializing
+        _state.value = RangingState.Starting.Initializing
 
-            val peerToken = deserializeDiscoveryToken(remoteParams.toByteArray())
-            session.runWithConfiguration(NINearbyPeerConfiguration(peerToken))
+        val peerToken = deserializeDiscoveryToken(remoteParams.toByteArray())
+        val configuration = NINearbyPeerConfiguration(peerToken)
+
+        // NearbyInteraction requires delegate and run() on the main thread
+        platform.darwin.dispatch_async(platform.darwin.dispatch_get_main_queue()) {
+            session.runWithConfiguration(configuration)
         }
     }
 
