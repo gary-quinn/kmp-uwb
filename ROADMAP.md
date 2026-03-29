@@ -28,6 +28,8 @@ Everything needed to build production UWB ranging apps on Android and iOS from s
 | **Android Auto-Init** | v0.1.0 | AndroidX Startup — zero configuration for consumers |
 | **Distribution** | v0.1.0 | Maven Central (`com.atruedev:kmp-uwb`) + Swift Package Manager (XCFramework) |
 | **CI/CD Pipeline** | v0.1.0 | GitHub Actions — ktlint, Android build/test, iOS build/test, Dokka docs, Maven Central publish, GitHub Release |
+| **Peer Connector** | v0.1.x | Transport-agnostic OOB parameter exchange — `PreparedSession`, `PeerConnector` fun interface, `startWithConnector` orchestration. `FakePreparedSession`, `FakePeerConnector` test doubles |
+| **iOS Discovery Token Cache** | v0.1.x | Per-session `DiscoveryTokenCache` avoids repeated NSKeyedArchiver serialization on the ranging hot path |
 
 ### Known Limitations
 
@@ -48,7 +50,6 @@ Everything needed to build production UWB ranging apps on Android and iOS from s
 |---------|-------|
 | **Multi-peer ranging** | Range to multiple peers simultaneously within a single session |
 | **Session recovery** | Auto-resume after system suspension (iOS background) |
-| **Peer discovery** | OOB (Out-of-Band) peer exchange helpers — integrate with kmp-ble or NFC for session bootstrapping |
 | **Session events Flow** | Dedicated event stream for session-level events (peer joined, peer left, suspension, resume) |
 | **Ranging filters** | Distance smoothing, outlier rejection, moving average |
 
@@ -70,7 +71,7 @@ Everything needed to build production UWB ranging apps on Android and iOS from s
 **Criteria:**
 
 API stability:
-- Core module API (`UwbAdapter`, `RangingSession`, `RangingConfig`) unchanged for 2+ minor releases
+- Core module API (`UwbAdapter`, `RangingSession`, `RangingConfig`, `PreparedSession`) unchanged for 2+ minor releases
 - Deprecation cycle enforced: deprecated APIs survive at least 1 minor release before removal
 - All public APIs have KDoc documentation
 
@@ -93,15 +94,20 @@ Features we're tracking but not actively working on. Community interest and use 
 
 | Feature | Notes |
 |---------|-------|
+| Aliro smart lock protocol | Secure access with proximity-based unlock (Aliro 1.0, February 2026) |
+| CCC digital car keys | Car Connectivity Consortium profile support |
 | FiRa 2.0 features | Data transfer over UWB, enhanced security modes |
 | Secure ranging | End-to-end session key management with STS provisioning |
-| Indoor positioning | Map-based positioning using multiple anchors |
-| UWB + BLE fusion | Combined kmp-ble + kmp-uwb session management for discovery → ranging workflows |
-| Android CCC Digital Key | Car Connectivity Consortium profile support |
+| Indoor positioning | Map-based positioning using multiple anchors (TDoA) |
+| UWB + BLE connector module | Dedicated `kmp-uwb-connector` bridge with kmp-ble for seamless BLE discovery -> OOB -> ranging pipeline |
+| Precision finding UX | Item tracker patterns — BLE coarse finding -> UWB last-meter guidance |
+| Chipset quirk registry | NXP vs Qorvo behavioral differences (same pattern as kmp-ble-quirks) |
+| ARKit camera-assisted guidance | iOS 16+ visual direction overlay |
 | Geofencing | UWB-based precision geofences (sub-meter accuracy) |
 | Record-replay testing | Record real UWB sessions and replay for offline testing |
 | Additional FiRa profiles | Point-to-multipoint, device-to-infrastructure |
 | wasm / JS target | If Web UWB APIs emerge from standards bodies |
+| watchOS target | Apple Watch has U1 since Series 6 |
 
 ---
 
@@ -113,4 +119,4 @@ Features we're tracking but not actively working on. Community interest and use 
 
 ---
 
-*Current as of v0.1.0*
+*Current as of v0.1.x*
