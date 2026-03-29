@@ -2,6 +2,7 @@ package com.atruedev.kmpuwb.sample
 
 import com.atruedev.kmpuwb.adapter.UwbAdapter
 import com.atruedev.kmpuwb.adapter.UwbAdapterState
+import com.atruedev.kmpuwb.config.RangingRole
 import com.atruedev.kmpuwb.peer.Peer
 import com.atruedev.kmpuwb.peer.PeerAddress
 import com.atruedev.kmpuwb.ranging.Angle
@@ -22,6 +23,7 @@ import kotlinx.coroutines.launch
 
 class RangingDemo(
     private val scope: CoroutineScope,
+    private val role: RangingRole,
 ) {
     private val _log = MutableStateFlow("")
     val log: StateFlow<String> = _log.asStateFlow()
@@ -33,7 +35,7 @@ class RangingDemo(
         scope.launch {
             try {
                 val adapter = UwbAdapter()
-                appendLog("UWB adapter created")
+                appendLog("UWB adapter created (role: ${role.name})")
                 logAdapterState(adapter)
                 logCapabilities(adapter)
                 startDemo(adapter)
