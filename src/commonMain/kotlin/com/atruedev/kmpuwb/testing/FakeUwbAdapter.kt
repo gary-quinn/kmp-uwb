@@ -23,7 +23,6 @@ public class FakeUwbAdapter(
     initialState: UwbAdapterState = UwbAdapterState.ON,
     private val capabilities: UwbCapabilities = DEFAULT_CAPABILITIES,
 ) : UwbAdapter {
-
     private val _state = MutableStateFlow(initialState)
     override val state: StateFlow<UwbAdapterState> = _state.asStateFlow()
 
@@ -50,11 +49,12 @@ public class FakeUwbAdapter(
     }
 
     public companion object {
-        public val DEFAULT_CAPABILITIES: UwbCapabilities = UwbCapabilities(
-            supportedRoles = setOf(RangingRole.CONTROLLER, RangingRole.CONTROLEE),
-            angleOfArrivalSupported = true,
-            supportedChannels = setOf(5, 9),
-            backgroundRangingSupported = true,
-        )
+        public val DEFAULT_CAPABILITIES: UwbCapabilities =
+            UwbCapabilities(
+                supportedRoles = setOf(RangingRole.CONTROLLER, RangingRole.CONTROLEE),
+                angleOfArrivalSupported = true,
+                supportedChannels = setOf(5, 9),
+                backgroundRangingSupported = true,
+            )
     }
 }

@@ -11,7 +11,6 @@ import kotlin.jvm.JvmInline
  */
 @JvmInline
 public value class Angle private constructor(public val degrees: Double) : Comparable<Angle> {
-
     /** Angle in radians. */
     public val radians: Double
         get() = degrees * (kotlin.math.PI / 180.0)

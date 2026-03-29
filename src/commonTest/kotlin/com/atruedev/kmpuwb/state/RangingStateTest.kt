@@ -5,7 +5,6 @@ import kotlin.test.Test
 import kotlin.test.assertIs
 
 class RangingStateTest {
-
     @Test
     fun idleReadyIsIdle() {
         val state: RangingState = RangingState.Idle.Ready
@@ -43,12 +42,13 @@ class RangingStateTest {
     fun statesCanBeExhaustivelyMatched() {
         val state: RangingState = RangingState.Starting.Negotiating
 
-        val description = when (state) {
-            is RangingState.Idle -> "idle"
-            is RangingState.Starting -> "starting"
-            is RangingState.Active -> "active"
-            is RangingState.Stopped -> "stopped"
-        }
+        val description =
+            when (state) {
+                is RangingState.Idle -> "idle"
+                is RangingState.Starting -> "starting"
+                is RangingState.Active -> "active"
+                is RangingState.Stopped -> "stopped"
+            }
 
         kotlin.test.assertEquals("starting", description)
     }

@@ -5,7 +5,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 
 class PeerAddressTest {
-
     @Test
     fun equalBytesProduceEqualAddresses() {
         val a = PeerAddress(byteArrayOf(0x01, 0x02, 0x03))
