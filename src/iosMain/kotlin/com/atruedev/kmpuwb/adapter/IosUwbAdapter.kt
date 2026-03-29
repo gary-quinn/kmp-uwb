@@ -7,6 +7,7 @@ import com.atruedev.kmpuwb.session.PreparedSession
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import platform.Foundation.NSClassFromString
 import platform.NearbyInteraction.NISession
 
 internal class IosUwbAdapter : UwbAdapter {
@@ -29,16 +30,15 @@ internal class IosUwbAdapter : UwbAdapter {
 
     override suspend fun prepareSession(config: RangingConfig): PreparedSession = IosPreparedSession(config)
 
-    private fun resolveAdapterState(): UwbAdapterState =
-        try {
-            if (NISession.deviceCapabilities.supportsPreciseDistanceMeasurement) {
-                UwbAdapterState.ON
-            } else {
-                UwbAdapterState.UNSUPPORTED
-            }
-        } catch (_: Exception) {
+    private fun resolveAdapterState(): UwbAdapterState {
+        if (NSClassFromString("NISession") == null) return UwbAdapterState.UNSUPPORTED
+
+        return if (NISession.isSupported()) {
+            UwbAdapterState.ON
+        } else {
             UwbAdapterState.UNSUPPORTED
         }
+    }
 }
 
 public actual fun UwbAdapter(): UwbAdapter = IosUwbAdapter()
