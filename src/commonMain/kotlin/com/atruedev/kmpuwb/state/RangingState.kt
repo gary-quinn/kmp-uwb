@@ -54,7 +54,9 @@ public sealed interface RangingState {
         public data object ByPeer : Stopped
 
         /** Session ended due to an error. */
-        public data class ByError(val error: UwbError) : Stopped
+        public data class ByError(
+            val error: UwbError,
+        ) : Stopped
 
         /** Session ended because UWB adapter was turned off. */
         public data object BySystemEvent : Stopped

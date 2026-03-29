@@ -11,7 +11,9 @@ import kotlin.math.round
  * extension to construct.
  */
 @JvmInline
-public value class Distance private constructor(private val packed: Long) : Comparable<Distance> {
+public value class Distance private constructor(
+    private val packed: Long,
+) : Comparable<Distance> {
     /** Distance in meters. */
     public val meters: Double
         get() = Double.fromBits(packed)

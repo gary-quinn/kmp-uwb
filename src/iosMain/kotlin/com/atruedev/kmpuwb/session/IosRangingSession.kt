@@ -83,7 +83,9 @@ internal class IosRangingSession(
         scope.cancel()
     }
 
-    private inner class SessionDelegate : NSObject(), NISessionDelegateProtocol {
+    private inner class SessionDelegate :
+        NSObject(),
+        NISessionDelegateProtocol {
         override fun session(
             session: NISession,
             didUpdateNearbyObjects: List<*>,
