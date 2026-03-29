@@ -24,15 +24,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.atruedev.kmpuwb.config.RangingRole
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 
 @Composable
 fun RangingDemoScreen() {
@@ -40,10 +38,9 @@ fun RangingDemoScreen() {
 
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
-            if (selectedRole == null) {
-                RoleSelectionScreen(onRoleSelected = { selectedRole = it })
-            } else {
-                RangingScreen(role = selectedRole!!)
+            when (val role = selectedRole) {
+                null -> RoleSelectionScreen(onRoleSelected = { selectedRole = it })
+                else -> RangingScreen(role = role)
             }
         }
     }
@@ -99,13 +96,13 @@ private fun RoleSelectionScreen(onRoleSelected: (RangingRole) -> Unit) {
 
 @Composable
 private fun RangingScreen(role: RangingRole) {
-    val scope = remember { CoroutineScope(SupervisorJob() + Dispatchers.Main) }
-    val demo = remember { RangingDemo(scope, role) }
+    val scope = rememberCoroutineScope()
+    val demo = remember(role) { RangingDemo(scope, role) }
     val log by demo.log.collectAsState()
     val phase by demo.phase.collectAsState()
     val localParams by demo.localParamsBase64.collectAsState()
 
-    DisposableEffect(Unit) {
+    DisposableEffect(demo) {
         demo.start()
         onDispose { demo.stop() }
     }

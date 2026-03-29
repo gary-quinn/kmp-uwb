@@ -10,9 +10,9 @@ import com.atruedev.kmpuwb.session.RangingResult
 import com.atruedev.kmpuwb.session.RangingSession
 import com.atruedev.kmpuwb.session.SessionParams
 import com.atruedev.kmpuwb.state.RangingState
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,11 +27,14 @@ enum class DemoPhase {
     ERROR,
 }
 
+private const val LOG_MAX_LINES = 200
+
 @OptIn(ExperimentalEncodingApi::class)
 class RangingDemo(
     private val scope: CoroutineScope,
     private val role: RangingRole,
 ) {
+    private val logLines = mutableListOf<String>()
     private val _log = MutableStateFlow("")
     val log: StateFlow<String> = _log.asStateFlow()
 
@@ -43,10 +46,10 @@ class RangingDemo(
 
     private var prepared: PreparedSession? = null
     private var session: RangingSession? = null
-    private var rangingJob: Job? = null
+    private var activeJobs = mutableListOf<Job>()
 
     fun start() {
-        scope.launch {
+        launchTracked {
             try {
                 val adapter = UwbAdapter()
                 appendLog("UWB adapter created (role: ${role.name})")
@@ -54,7 +57,7 @@ class RangingDemo(
                 if (adapter.state.value != UwbAdapterState.ON) {
                     appendLog("UWB not available: ${adapter.state.value}")
                     _phase.value = DemoPhase.ERROR
-                    return@launch
+                    return@launchTracked
                 }
 
                 val caps = adapter.capabilities()
@@ -65,6 +68,8 @@ class RangingDemo(
                 )
 
                 prepareAndWait(adapter)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 appendLog("Error: ${e.message}")
                 _phase.value = DemoPhase.ERROR
@@ -94,7 +99,7 @@ class RangingDemo(
     }
 
     fun submitRemoteParams(base64: String) {
-        scope.launch {
+        launchTracked {
             try {
                 val bytes = Base64.decode(base64.trim())
                 val remoteParams = SessionParams(bytes)
@@ -103,7 +108,7 @@ class RangingDemo(
                 val prep =
                     prepared ?: run {
                         appendLog("Error: session not prepared")
-                        return@launch
+                        return@launchTracked
                     }
 
                 appendLog("Starting ranging...")
@@ -112,6 +117,8 @@ class RangingDemo(
 
                 _phase.value = DemoPhase.RANGING
                 observeSession()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 appendLog("Failed to start ranging: ${e.message}")
                 _phase.value = DemoPhase.ERROR
@@ -120,29 +127,35 @@ class RangingDemo(
     }
 
     fun stop() {
-        rangingJob?.cancel()
+        activeJobs.forEach { it.cancel() }
+        activeJobs.clear()
         session?.close()
         prepared?.close()
         session = null
         prepared = null
-        scope.cancel()
     }
 
     private fun observeSession() {
         val currentSession = session ?: return
 
-        scope.launch {
+        launchTracked {
             currentSession.state.collect { state ->
                 appendLog("State: ${formatState(state)}")
             }
         }
 
-        rangingJob =
-            scope.launch {
-                currentSession.rangingResults.collect { result ->
-                    logResult(result)
-                }
+        launchTracked {
+            currentSession.rangingResults.collect { result ->
+                logResult(result)
             }
+        }
+    }
+
+    private fun launchTracked(block: suspend CoroutineScope.() -> Unit): Job {
+        val job = scope.launch(block = block)
+        activeJobs.add(job)
+        job.invokeOnCompletion { activeJobs.remove(job) }
+        return job
     }
 
     private fun logResult(result: RangingResult) {
@@ -184,6 +197,10 @@ class RangingDemo(
         }
 
     private fun appendLog(message: String) {
-        _log.value += "$message\n"
+        logLines.add(message)
+        if (logLines.size > LOG_MAX_LINES) {
+            logLines.removeFirst()
+        }
+        _log.value = logLines.joinToString("\n")
     }
 }

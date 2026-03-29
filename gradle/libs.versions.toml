@@ -6,7 +6,6 @@ agp = "9.1.0"
 coroutines = "1.10.2"
 composeMultiplatform = "1.10.3"
 androidxActivityCompose = "1.10.1"
-androidxLifecycle = "2.9.0"
 androidMinSdk = "33"
 androidTargetSdk = "36"
 androidCompileSdk = "36"
@@ -25,8 +24,6 @@ androidx-core-uwb-rxjava3 = { module = "androidx.core.uwb:uwb-rxjava3", version.
 androidx-startup = { module = "androidx.startup:startup-runtime", version = "1.2.0" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivityCompose" }
-lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "androidxLifecycle" }
-lifecycle-runtime-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidxLifecycle" }
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }

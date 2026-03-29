@@ -32,6 +32,8 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project(":"))
+            // compose.* accessors are deprecated in favor of libs.* catalog entries,
+            // but Compose Multiplatform Gradle plugin still uses them for KMP targets
             @Suppress("DEPRECATION")
             implementation(compose.runtime)
             @Suppress("DEPRECATION")
