@@ -34,7 +34,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 public class FakeRangingSession(
     override val config: RangingConfig = DEFAULT_CONFIG,
 ) : RangingSession {
-
     private val _state = MutableStateFlow<RangingState>(RangingState.Idle.Ready)
     override val state: StateFlow<RangingState> = _state.asStateFlow()
 
@@ -108,8 +107,9 @@ public class FakeRangingSession(
     }
 
     public companion object {
-        public val DEFAULT_CONFIG: RangingConfig = RangingConfig(
-            role = RangingRole.CONTROLEE,
-        )
+        public val DEFAULT_CONFIG: RangingConfig =
+            RangingConfig(
+                role = RangingRole.CONTROLEE,
+            )
     }
 }

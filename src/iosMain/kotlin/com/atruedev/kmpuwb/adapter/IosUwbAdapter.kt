@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import platform.NearbyInteraction.NISession
 
 internal class IosUwbAdapter : UwbAdapter {
-
     private val _state = MutableStateFlow(resolveAdapterState())
 
     override val state: StateFlow<UwbAdapterState> = _state.asStateFlow()

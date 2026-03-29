@@ -37,18 +37,19 @@ internal class AndroidRangingSession(
     override val config: RangingConfig,
     private val context: Context,
 ) : RangingSession {
-
-    private val scope = CoroutineScope(
-        SupervisorJob() + Dispatchers.Default.limitedParallelism(1),
-    )
+    private val scope =
+        CoroutineScope(
+            SupervisorJob() + Dispatchers.Default.limitedParallelism(1),
+        )
 
     private val _state = MutableStateFlow<RangingState>(RangingState.Idle.Ready)
     override val state: StateFlow<RangingState> = _state.asStateFlow()
 
-    private val resultChannel = Channel<RangingResult>(
-        capacity = 64,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
-    )
+    private val resultChannel =
+        Channel<RangingResult>(
+            capacity = 64,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        )
     override val rangingResults: Flow<RangingResult> = resultChannel.receiveAsFlow()
 
     private var rangingJob: Job? = null
@@ -60,9 +61,10 @@ internal class AndroidRangingSession(
 
         _state.value = RangingState.Starting.Negotiating
 
-        rangingJob = scope.launch {
-            startRangingWithPeer(peer)
-        }
+        rangingJob =
+            scope.launch {
+                startRangingWithPeer(peer)
+            }
     }
 
     override fun close() {
@@ -79,10 +81,11 @@ internal class AndroidRangingSession(
         try {
             val uwbManager = UwbManager.createInstance(context)
 
-            val sessionScope = when (config.role) {
-                RangingRole.CONTROLLER -> uwbManager.controllerSessionScope()
-                RangingRole.CONTROLEE -> uwbManager.controleeSessionScope()
-            }
+            val sessionScope =
+                when (config.role) {
+                    RangingRole.CONTROLLER -> uwbManager.controllerSessionScope()
+                    RangingRole.CONTROLEE -> uwbManager.controleeSessionScope()
+                }
 
             _state.value = RangingState.Starting.Initializing
 
@@ -99,10 +102,11 @@ internal class AndroidRangingSession(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            val error = SessionLost(
-                message = "Android ranging session failed: ${e.message}",
-                cause = e,
-            )
+            val error =
+                SessionLost(
+                    message = "Android ranging session failed: ${e.message}",
+                    cause = e,
+                )
             _state.value = RangingState.Stopped.ByError(error)
             resultChannel.close()
         }
@@ -114,11 +118,12 @@ internal class AndroidRangingSession(
     ): RangingParameters {
         val peerDevices = listOf(UwbDevice(UwbAddress(peer.address.toByteArray())))
 
-        val complexChannel = if (sessionScope is UwbControllerSessionScope) {
-            sessionScope.uwbComplexChannel
-        } else {
-            UwbComplexChannel(config.channel, 0)
-        }
+        val complexChannel =
+            if (sessionScope is UwbControllerSessionScope) {
+                sessionScope.uwbComplexChannel
+            } else {
+                UwbComplexChannel(config.channel, 0)
+            }
 
         return RangingParameters(
             uwbConfigType = RangingParameters.CONFIG_UNICAST_DS_TWR,

@@ -75,17 +75,17 @@ public class RangingConfigBuilder {
     public var sessionId: Int = 0
     public var sessionKey: ByteArray? = null
 
-    public fun build(): RangingConfig = RangingConfig(
-        role = role,
-        rangingInterval = rangingInterval,
-        angleOfArrival = angleOfArrival,
-        stsMode = stsMode,
-        channel = channel,
-        sessionId = sessionId,
-        sessionKey = sessionKey,
-    )
+    public fun build(): RangingConfig =
+        RangingConfig(
+            role = role,
+            rangingInterval = rangingInterval,
+            angleOfArrival = angleOfArrival,
+            stsMode = stsMode,
+            channel = channel,
+            sessionId = sessionId,
+            sessionKey = sessionKey,
+        )
 }
 
 /** Create a [RangingConfig] using a DSL builder. */
-public fun rangingConfig(block: RangingConfigBuilder.() -> Unit): RangingConfig =
-    RangingConfigBuilder().apply(block).build()
+public fun rangingConfig(block: RangingConfigBuilder.() -> Unit): RangingConfig = RangingConfigBuilder().apply(block).build()
