@@ -30,9 +30,13 @@ internal class IosUwbAdapter : UwbAdapter {
     override suspend fun prepareSession(config: RangingConfig): PreparedSession = IosPreparedSession(config)
 
     private fun resolveAdapterState(): UwbAdapterState =
-        if (NISession.deviceCapabilities.supportsPreciseDistanceMeasurement) {
-            UwbAdapterState.ON
-        } else {
+        try {
+            if (NISession.deviceCapabilities.supportsPreciseDistanceMeasurement) {
+                UwbAdapterState.ON
+            } else {
+                UwbAdapterState.UNSUPPORTED
+            }
+        } catch (_: Exception) {
             UwbAdapterState.UNSUPPORTED
         }
 }

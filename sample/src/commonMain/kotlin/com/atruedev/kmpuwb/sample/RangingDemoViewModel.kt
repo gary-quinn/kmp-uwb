@@ -20,16 +20,25 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class RangingDemoViewModel : ViewModel() {
-    private val adapter = UwbAdapter()
     private val _log = MutableStateFlow("")
     val log: StateFlow<String> = _log.asStateFlow()
 
+    private var adapter: UwbAdapter? = null
     private var session: RangingSession? = null
     private var rangingJob: Job? = null
 
     fun start() {
-        observeAdapterState()
-        viewModelScope.launch { checkCapabilitiesAndRange() }
+        viewModelScope.launch {
+            try {
+                val uwbAdapter = UwbAdapter()
+                adapter = uwbAdapter
+                appendLog("UWB adapter created")
+                observeAdapterState(uwbAdapter)
+                checkCapabilitiesAndRange(uwbAdapter)
+            } catch (e: Exception) {
+                appendLog("UWB not available: ${e.message}")
+            }
+        }
     }
 
     fun stop() {
@@ -38,7 +47,7 @@ class RangingDemoViewModel : ViewModel() {
         session = null
     }
 
-    private fun observeAdapterState() {
+    private fun observeAdapterState(adapter: UwbAdapter) {
         viewModelScope.launch {
             adapter.state.collect { state ->
                 when (state) {
@@ -50,7 +59,7 @@ class RangingDemoViewModel : ViewModel() {
         }
     }
 
-    private suspend fun checkCapabilitiesAndRange() {
+    private suspend fun checkCapabilitiesAndRange(adapter: UwbAdapter) {
         if (adapter.state.value != UwbAdapterState.ON) {
             appendLog("UWB not available — skipping ranging")
             return
@@ -63,10 +72,10 @@ class RangingDemoViewModel : ViewModel() {
                 "channels=${caps.supportedChannels}",
         )
 
-        startRanging()
+        startRanging(adapter)
     }
 
-    private suspend fun startRanging() {
+    private suspend fun startRanging(adapter: UwbAdapter) {
         val config =
             rangingConfig {
                 role = RangingRole.CONTROLLER
@@ -82,6 +91,8 @@ class RangingDemoViewModel : ViewModel() {
             observeSession()
         } catch (e: ConnectorException) {
             appendLog("OOB exchange failed: ${e.error.message}")
+        } catch (e: Exception) {
+            appendLog("Ranging failed: ${e.message}")
         }
     }
 
