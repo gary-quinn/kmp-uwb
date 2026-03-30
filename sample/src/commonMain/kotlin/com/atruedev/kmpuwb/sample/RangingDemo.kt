@@ -38,8 +38,6 @@ class RangingDemo(
     val error: StateFlow<String?> = _error.asStateFlow()
 
     private var rangingJob: Job? = null
-    private var session: RangingSession? = null
-    private var scanner: Scanner? = null
 
     fun start() {
         _error.value = null
@@ -59,8 +57,10 @@ class RangingDemo(
                     startRanging(adapter)
                 } catch (e: CancellationException) {
                     throw e
+                } catch (e: ConnectorException) {
+                    _error.value = "BLE exchange failed: ${e.error.message}"
                 } catch (e: Exception) {
-                    _error.value = e.message ?: "Unknown error"
+                    _error.value = "${e::class.simpleName}: ${e.message}"
                 }
             }
     }
@@ -68,10 +68,6 @@ class RangingDemo(
     fun stop() {
         rangingJob?.cancel()
         rangingJob = null
-        session?.close()
-        scanner?.close()
-        session = null
-        scanner = null
     }
 
     private suspend fun logCapabilities(adapter: UwbAdapter) {
@@ -91,7 +87,7 @@ class RangingDemo(
                 angleOfArrival = true
             }
 
-        val s =
+        val scanner =
             when (role) {
                 RangingRole.CONTROLLER -> {
                     appendLog("Scanning for controlee...")
@@ -104,45 +100,34 @@ class RangingDemo(
                 RangingRole.CONTROLEE -> null
             }
 
-        scanner = s
-
         try {
             val connector =
                 when (role) {
-                    RangingRole.CONTROLLER -> BleConnector.controller(s!!)
+                    RangingRole.CONTROLLER -> BleConnector.controller(scanner!!)
                     RangingRole.CONTROLEE -> {
                         appendLog("Advertising, waiting for controller...")
                         BleConnector.controlee()
                     }
                 }
 
-            session = adapter.startWithConnector(config, connector)
+            val session = adapter.startWithConnector(config, connector)
             appendLog("Ranging started\n")
-            observeSession()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: ConnectorException) {
-            _error.value = "BLE exchange failed: ${e.error.message}"
-        } catch (e: Exception) {
-            _error.value = "${e::class.simpleName}: ${e.message}"
+            observeSession(session)
         } finally {
-            s?.close()
-            scanner = null
+            scanner?.close()
         }
     }
 
-    private suspend fun observeSession() {
-        val currentSession = session ?: return
-
+    private suspend fun observeSession(session: RangingSession) {
         coroutineScope {
             launch {
-                currentSession.state.collect { state ->
+                session.state.collect { state ->
                     appendLog("State: ${formatState(state)}")
                 }
             }
 
             launch {
-                currentSession.rangingResults.collect { result ->
+                session.rangingResults.collect { result ->
                     logResult(result)
                 }
             }

@@ -45,11 +45,13 @@ internal class IosPreparedSession private constructor(
                 withTimeout(NI_SESSION_INIT_TIMEOUT) {
                     suspendCancellableCoroutine { cont ->
                         dispatch_async(dispatch_get_main_queue()) {
-                            val session = NISession()
-                            val token = session.discoveryToken
+                            val niSession = NISession()
+                            cont.invokeOnCancellation { niSession.invalidate() }
+                            val token = niSession.discoveryToken
                             if (token != null) {
-                                cont.resume(session to token)
+                                cont.resume(niSession to token)
                             } else {
+                                niSession.invalidate()
                                 cont.resumeWithException(
                                     IllegalStateException(
                                         "NISession.discoveryToken unavailable — " +

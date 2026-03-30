@@ -96,6 +96,7 @@ internal class IosRangingSession(
         val configuration = NINearbyPeerConfiguration(peerToken)
 
         suspendCancellableCoroutine { cont ->
+            cont.invokeOnCancellation { session.invalidate() }
             platform.darwin.dispatch_async(platform.darwin.dispatch_get_main_queue()) {
                 try {
                     session.delegate = delegate
