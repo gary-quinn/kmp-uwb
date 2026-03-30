@@ -1,35 +1,31 @@
 package com.atruedev.kmpuwb.sample
 
+import com.atruedev.kmpble.scanner.Scanner
 import com.atruedev.kmpuwb.adapter.UwbAdapter
 import com.atruedev.kmpuwb.adapter.UwbAdapterState
 import com.atruedev.kmpuwb.config.RangingRole
 import com.atruedev.kmpuwb.config.StsMode
 import com.atruedev.kmpuwb.config.rangingConfig
-import com.atruedev.kmpuwb.session.PreparedSession
+import com.atruedev.kmpuwb.connector.ConnectorException
+import com.atruedev.kmpuwb.connector.ble.BleConnector
+import com.atruedev.kmpuwb.connector.ble.UwbOobService
+import com.atruedev.kmpuwb.connector.startWithConnector
 import com.atruedev.kmpuwb.session.RangingResult
 import com.atruedev.kmpuwb.session.RangingSession
-import com.atruedev.kmpuwb.session.SessionParams
 import com.atruedev.kmpuwb.state.RangingState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlin.io.encoding.Base64
-import kotlin.io.encoding.ExperimentalEncodingApi
-
-enum class DemoPhase {
-    CHECKING_ADAPTER,
-    WAITING_FOR_REMOTE_PARAMS,
-    RANGING,
-    ERROR,
-}
+import kotlin.uuid.ExperimentalUuidApi
 
 private const val LOG_MAX_LINES = 200
 
-@OptIn(ExperimentalEncodingApi::class)
+@OptIn(ExperimentalUuidApi::class)
 class RangingDemo(
     private val scope: CoroutineScope,
     private val role: RangingRole,
@@ -38,46 +34,51 @@ class RangingDemo(
     private val _log = MutableStateFlow("")
     val log: StateFlow<String> = _log.asStateFlow()
 
-    private val _phase = MutableStateFlow(DemoPhase.CHECKING_ADAPTER)
-    val phase: StateFlow<DemoPhase> = _phase.asStateFlow()
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
 
-    private val _localParamsBase64 = MutableStateFlow("")
-    val localParamsBase64: StateFlow<String> = _localParamsBase64.asStateFlow()
-
-    private var prepared: PreparedSession? = null
-    private var session: RangingSession? = null
-    private var activeJobs = mutableListOf<Job>()
+    private var rangingJob: Job? = null
 
     fun start() {
-        launchTracked {
-            try {
-                val adapter = UwbAdapter()
-                appendLog("UWB adapter created (role: ${role.name})")
+        _error.value = null
+        rangingJob =
+            scope.launch {
+                try {
+                    val adapter = UwbAdapter()
+                    appendLog("Role: ${role.name}")
 
-                if (adapter.state.value != UwbAdapterState.ON) {
-                    appendLog("UWB not available: ${adapter.state.value}")
-                    _phase.value = DemoPhase.ERROR
-                    return@launchTracked
+                    if (adapter.state.value != UwbAdapterState.ON) {
+                        _error.value = "UWB not available: ${adapter.state.value}"
+                        return@launch
+                    }
+
+                    appendLog("UWB: ready")
+                    logCapabilities(adapter)
+                    startRanging(adapter)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: ConnectorException) {
+                    _error.value = "BLE exchange failed: ${e.error.message}"
+                } catch (e: Exception) {
+                    _error.value = "${e::class.simpleName}: ${e.message}"
                 }
-
-                val caps = adapter.capabilities()
-                appendLog(
-                    "Capabilities: roles=${caps.supportedRoles}, " +
-                        "AoA=${caps.angleOfArrivalSupported}, " +
-                        "channels=${caps.supportedChannels}",
-                )
-
-                prepareAndWait(adapter)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                appendLog("Error: ${e.message}")
-                _phase.value = DemoPhase.ERROR
             }
-        }
     }
 
-    private suspend fun prepareAndWait(adapter: UwbAdapter) {
+    fun stop() {
+        rangingJob?.cancel()
+        rangingJob = null
+    }
+
+    private suspend fun logCapabilities(adapter: UwbAdapter) {
+        val caps = adapter.capabilities()
+        appendLog(
+            "Capabilities: AoA=${caps.angleOfArrivalSupported}, " +
+                "channels=${caps.supportedChannels}",
+        )
+    }
+
+    private suspend fun startRanging(adapter: UwbAdapter) {
         val config =
             rangingConfig {
                 this.role = this@RangingDemo.role
@@ -86,76 +87,51 @@ class RangingDemo(
                 angleOfArrival = true
             }
 
-        appendLog("Preparing session...")
-        val prep = adapter.prepareSession(config)
-        prepared = prep
-
-        val localBase64 = Base64.encode(prep.localParams.toByteArray())
-        _localParamsBase64.value = localBase64
-        appendLog("Local params ready (${prep.localParams.size} bytes)")
-        appendLog("Waiting for remote params...\n")
-
-        _phase.value = DemoPhase.WAITING_FOR_REMOTE_PARAMS
-    }
-
-    fun submitRemoteParams(base64: String) {
-        launchTracked {
-            try {
-                val bytes = Base64.decode(base64.trim())
-                val remoteParams = SessionParams(bytes)
-                appendLog("Remote params received (${remoteParams.size} bytes)")
-
-                val prep =
-                    prepared ?: run {
-                        appendLog("Error: session not prepared")
-                        return@launchTracked
+        val scanner =
+            when (role) {
+                RangingRole.CONTROLLER -> {
+                    appendLog("Scanning for controlee...")
+                    Scanner {
+                        filters {
+                            match { serviceUuid(UwbOobService.SERVICE_UUID) }
+                        }
                     }
-
-                appendLog("Starting ranging...")
-                session = prep.startRanging(remoteParams)
-                prepared = null
-
-                _phase.value = DemoPhase.RANGING
-                observeSession()
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                appendLog("Failed to start ranging: ${e.message}")
-                _phase.value = DemoPhase.ERROR
+                }
+                RangingRole.CONTROLEE -> null
             }
+
+        try {
+            val connector =
+                when (role) {
+                    RangingRole.CONTROLLER -> BleConnector.controller(scanner!!)
+                    RangingRole.CONTROLEE -> {
+                        appendLog("Advertising, waiting for controller...")
+                        BleConnector.controlee()
+                    }
+                }
+
+            val session = adapter.startWithConnector(config, connector)
+            appendLog("Ranging started\n")
+            observeSession(session)
+        } finally {
+            scanner?.close()
         }
     }
 
-    fun stop() {
-        activeJobs.forEach { it.cancel() }
-        activeJobs.clear()
-        session?.close()
-        prepared?.close()
-        session = null
-        prepared = null
-    }
+    private suspend fun observeSession(session: RangingSession) {
+        coroutineScope {
+            launch {
+                session.state.collect { state ->
+                    appendLog("State: ${formatState(state)}")
+                }
+            }
 
-    private fun observeSession() {
-        val currentSession = session ?: return
-
-        launchTracked {
-            currentSession.state.collect { state ->
-                appendLog("State: ${formatState(state)}")
+            launch {
+                session.rangingResults.collect { result ->
+                    logResult(result)
+                }
             }
         }
-
-        launchTracked {
-            currentSession.rangingResults.collect { result ->
-                logResult(result)
-            }
-        }
-    }
-
-    private fun launchTracked(block: suspend CoroutineScope.() -> Unit): Job {
-        val job = scope.launch(block = block)
-        activeJobs.add(job)
-        job.invokeOnCompletion { activeJobs.remove(job) }
-        return job
     }
 
     private fun logResult(result: RangingResult) {
@@ -164,36 +140,31 @@ class RangingDemo(
                 val m = result.measurement
                 val name = result.peer.name ?: result.peer.address.toString()
                 appendLog(
-                    "  $name: ${m.distance} " +
+                    "$name: ${m.distance} " +
                         "az=${m.azimuth ?: "n/a"} " +
                         "el=${m.elevation ?: "n/a"}",
                 )
             }
             is RangingResult.PeerLost ->
-                appendLog("  Peer lost: ${result.peer.name ?: result.peer.address}")
-            is RangingResult.PeerRecovered -> {
-                val m = result.measurement
-                appendLog(
-                    "  Peer recovered: ${result.peer.name ?: result.peer.address} " +
-                        "at ${m.distance}",
-                )
-            }
+                appendLog("Peer lost: ${result.peer.name ?: result.peer.address}")
+            is RangingResult.PeerRecovered ->
+                appendLog("Peer recovered: ${result.peer.name ?: result.peer.address}")
         }
     }
 
     private fun formatState(state: RangingState): String =
         when (state) {
-            is RangingState.Idle.Ready -> "Idle (ready)"
-            is RangingState.Idle.Unsupported -> "Idle (unsupported)"
-            is RangingState.Starting.Negotiating -> "Starting (negotiating)"
-            is RangingState.Starting.Initializing -> "Starting (initializing)"
-            is RangingState.Active.Ranging -> "Active (ranging)"
-            is RangingState.Active.Suspended -> "Active (suspended)"
-            is RangingState.Active.PeerLost -> "Active (peer lost)"
-            is RangingState.Stopped.ByRequest -> "Stopped (by request)"
-            is RangingState.Stopped.ByPeer -> "Stopped (by peer)"
-            is RangingState.Stopped.ByError -> "Stopped (error: ${state.error.message})"
-            is RangingState.Stopped.BySystemEvent -> "Stopped (system event)"
+            is RangingState.Idle.Ready -> "Idle"
+            is RangingState.Idle.Unsupported -> "Unsupported"
+            is RangingState.Starting.Negotiating -> "Negotiating"
+            is RangingState.Starting.Initializing -> "Initializing"
+            is RangingState.Active.Ranging -> "Ranging"
+            is RangingState.Active.Suspended -> "Suspended"
+            is RangingState.Active.PeerLost -> "Peer lost"
+            is RangingState.Stopped.ByRequest -> "Stopped"
+            is RangingState.Stopped.ByPeer -> "Peer disconnected"
+            is RangingState.Stopped.ByError -> "Error: ${state.error.message}"
+            is RangingState.Stopped.BySystemEvent -> "System event"
         }
 
     private fun appendLog(message: String) {

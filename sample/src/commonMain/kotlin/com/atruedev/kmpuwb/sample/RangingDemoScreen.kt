@@ -11,10 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -82,10 +80,8 @@ private fun RoleSelectionScreen(onRoleSelected: (RangingRole) -> Unit) {
         }
         Text(
             text =
-                "Controller initiates the session.\n" +
-                    "Controlee responds to a controller.\n\n" +
-                    "Run this app on two UWB devices,\n" +
-                    "one as Controller and one as Controlee.",
+                "Run on two UWB devices — one as Controller, one as Controlee.\n" +
+                    "BLE handles parameter exchange automatically.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 16.dp),
@@ -98,8 +94,7 @@ private fun RangingScreen(role: RangingRole) {
     val scope = rememberCoroutineScope()
     val demo = remember(role) { RangingDemo(scope, role) }
     val log by demo.log.collectAsState()
-    val phase by demo.phase.collectAsState()
-    val localParams by demo.localParamsBase64.collectAsState()
+    val error by demo.error.collectAsState()
 
     DisposableEffect(demo) {
         demo.start()
@@ -130,12 +125,13 @@ private fun RangingScreen(role: RangingRole) {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        if (phase == DemoPhase.WAITING_FOR_REMOTE_PARAMS) {
-            ParamsExchangeCard(
-                localParams = localParams,
-                onRemoteParamsSubmitted = { demo.submitRemoteParams(it) },
+        error?.let { errorMessage ->
+            Text(
+                text = errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(bottom = 8.dp),
             )
-            Spacer(modifier = Modifier.height(12.dp))
         }
 
         Text(
@@ -144,74 +140,5 @@ private fun RangingScreen(role: RangingRole) {
             fontFamily = FontFamily.Monospace,
             lineHeight = 18.sp,
         )
-    }
-}
-
-@Composable
-private fun ParamsExchangeCard(
-    localParams: String,
-    onRemoteParamsSubmitted: (String) -> Unit,
-) {
-    var remoteInput by remember { mutableStateOf("") }
-    var copied by remember { mutableStateOf(false) }
-
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Step 1: Send to the other device",
-                style = MaterialTheme.typography.labelMedium,
-            )
-            Text(
-                text = "Tap Copy, then send via AirDrop or any messaging app.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 2.dp, bottom = 8.dp),
-            )
-            OutlinedButton(
-                onClick = {
-                    copyToClipboard(localParams)
-                    copied = true
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = localParams.isNotEmpty(),
-            ) {
-                Text(if (copied) "Copied ✓" else "Copy Local Params")
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "Step 2: Paste from the other device",
-                style = MaterialTheme.typography.labelMedium,
-            )
-            Text(
-                text = "Copy the other device's params and paste here.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 2.dp, bottom = 8.dp),
-            )
-            OutlinedTextField(
-                value = remoteInput,
-                onValueChange = { remoteInput = it },
-                modifier =
-                    Modifier
-                        .fillMaxWidth(),
-                placeholder = { Text("Paste remote params") },
-                singleLine = false,
-                minLines = 2,
-                maxLines = 4,
-            )
-
-            Button(
-                onClick = { onRemoteParamsSubmitted(remoteInput) },
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp),
-                enabled = remoteInput.isNotBlank(),
-            ) {
-                Text("Start Ranging")
-            }
-        }
     }
 }
