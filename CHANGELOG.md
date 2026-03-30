@@ -11,6 +11,18 @@ _Changes on `main` that have not yet been tagged for release._
 
 ---
 
+## [0.1.2] - 2026-03-30
+
+### Other
+- update Package.swift for v0.1.2
+- refactor(sample): replace manual Base64 exchange with BleConnector (#19)
+- feat(connector): add kmp-uwb-connector module with BLE-based OOB exchange (#17)
+- refactor(sample): shared Compose Multiplatform ranging demo (#16)
+- update Package.swift for v0.1.1
+
+
+---
+
 ## [0.1.1] - 2026-03-29
 
 ### Added
@@ -43,7 +55,8 @@ _Changes on `main` that have not yet been tagged for release._
 - docs: add README, ARCHITECTURE, and ROADMAP
 
 
-[Unreleased]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.0-alpha2...v0.1.1
 [0.1.0]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.0-alpha2...v0.1.0
 [0.1.0-alpha2]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.0-alpha1...v0.1.0-alpha2
