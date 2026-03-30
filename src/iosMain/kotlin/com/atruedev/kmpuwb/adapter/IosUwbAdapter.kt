@@ -28,7 +28,7 @@ internal class IosUwbAdapter : UwbAdapter {
         )
     }
 
-    override suspend fun prepareSession(config: RangingConfig): PreparedSession = IosPreparedSession(config)
+    override suspend fun prepareSession(config: RangingConfig): PreparedSession = IosPreparedSession.create(config)
 
     private fun resolveAdapterState(): UwbAdapterState {
         if (NSClassFromString("NISession") == null) return UwbAdapterState.UNSUPPORTED

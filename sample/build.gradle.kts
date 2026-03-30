@@ -34,6 +34,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project(":"))
+            implementation(project(":kmp-uwb-connector"))
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)

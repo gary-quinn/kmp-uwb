@@ -9,5 +9,5 @@ import kotlin.time.Duration.Companion.seconds
 public data class BleConnectorConfig(
     val scanTimeout: Duration = 10.seconds,
     val exchangeTimeout: Duration = 5.seconds,
-    val connectionOptions: ConnectionOptions = ConnectionOptions(timeout = 10.seconds),
+    val connectionOptions: ConnectionOptions = ConnectionOptions(timeout = 10.seconds, mtuRequest = 247),
 )

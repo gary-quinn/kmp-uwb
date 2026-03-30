@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.Foundation.NSData
 import platform.Foundation.NSKeyedArchiver
 import platform.Foundation.NSKeyedUnarchiver
@@ -37,6 +38,8 @@ import platform.NearbyInteraction.NINearbyPeerConfiguration
 import platform.NearbyInteraction.NISession
 import platform.NearbyInteraction.NISessionDelegateProtocol
 import platform.darwin.NSObject
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 internal class IosRangingSession(
     override val config: RangingConfig,
@@ -78,7 +81,7 @@ internal class IosRangingSession(
         _state.value = RangingState.Starting.Initializing
     }
 
-    internal fun startPrepared(remoteParams: SessionParams) {
+    internal suspend fun startPrepared(remoteParams: SessionParams) {
         check(_state.value is RangingState.Idle.Ready) {
             "Cannot start session in state ${_state.value}"
         }
@@ -86,22 +89,33 @@ internal class IosRangingSession(
         _state.value = RangingState.Starting.Negotiating
 
         val session = niSession ?: error("NISession not initialized")
-        session.delegate = delegate
 
         _state.value = RangingState.Starting.Initializing
 
         val peerToken = deserializeDiscoveryToken(remoteParams.toByteArray())
         val configuration = NINearbyPeerConfiguration(peerToken)
 
-        // NearbyInteraction requires delegate and run() on the main thread
-        platform.darwin.dispatch_async(platform.darwin.dispatch_get_main_queue()) {
-            session.runWithConfiguration(configuration)
+        suspendCancellableCoroutine { cont ->
+            platform.darwin.dispatch_async(platform.darwin.dispatch_get_main_queue()) {
+                try {
+                    session.delegate = delegate
+                    session.runWithConfiguration(configuration)
+                    cont.resume(Unit)
+                } catch (e: Exception) {
+                    cont.resumeWithException(e)
+                }
+            }
         }
     }
 
     override fun close() {
-        niSession?.invalidate()
+        val session = niSession
         niSession = null
+        if (session != null) {
+            platform.darwin.dispatch_async(platform.darwin.dispatch_get_main_queue()) {
+                session.invalidate()
+            }
+        }
         if (_state.value !is RangingState.Stopped) {
             _state.value = RangingState.Stopped.ByRequest
         }
@@ -231,7 +245,12 @@ internal fun serializeDiscoveryToken(token: NIDiscoveryToken): ByteArray {
 
 internal fun deserializeDiscoveryToken(bytes: ByteArray): NIDiscoveryToken {
     val data = bytes.toNSData()
-    return NSKeyedUnarchiver.unarchiveObjectWithData(data) as NIDiscoveryToken
+    val obj = NSKeyedUnarchiver.unarchiveObjectWithData(data)
+    return (obj as? NIDiscoveryToken)
+        ?: error(
+            "Failed to deserialize NIDiscoveryToken from ${bytes.size} bytes — " +
+                "the remote peer may be on an incompatible platform or the data was corrupted during BLE transfer",
+        )
 }
 
 internal fun NSData.toByteArray(): ByteArray {
