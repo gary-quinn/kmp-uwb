@@ -7,26 +7,21 @@ import com.atruedev.kmpuwb.config.RangingConfig
 import com.atruedev.kmpuwb.config.RangingRole
 import com.atruedev.kmpuwb.session.AndroidPreparedSession
 import com.atruedev.kmpuwb.session.PreparedSession
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asStateFlow
 
 internal class AndroidUwbAdapter(
     private val context: Context,
 ) : UwbAdapter {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    // Snapshot state — Android UWB SDK does not provide a state-change broadcast.
+    // Re-query via UwbAdapter() if the user toggles UWB in Settings.
+    private val _state = MutableStateFlow(resolveAdapterState())
 
-    override val state: StateFlow<UwbAdapterState> =
-        flow { emit(resolveAdapterState()) }
-            .stateIn(scope, SharingStarted.Lazily, resolveAdapterState())
+    override val state: StateFlow<UwbAdapterState> = _state.asStateFlow()
 
     override suspend fun capabilities(): UwbCapabilities {
-        if (state.value == UwbAdapterState.UNSUPPORTED) {
+        if (_state.value == UwbAdapterState.UNSUPPORTED) {
             return UwbCapabilities.NONE
         }
 
@@ -56,9 +51,7 @@ internal class AndroidUwbAdapter(
         return AndroidPreparedSession(config, context, sessionScope)
     }
 
-    override fun close() {
-        scope.cancel()
-    }
+    override fun close() = Unit
 
     private fun resolveAdapterState(): UwbAdapterState {
         val hasFeature = context.packageManager.hasSystemFeature(PackageManager.FEATURE_UWB)
