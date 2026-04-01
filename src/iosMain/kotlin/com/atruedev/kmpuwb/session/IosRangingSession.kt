@@ -27,7 +27,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.cinterop.ObjCObjectVar
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.ptr
+import kotlinx.cinterop.value
 import platform.Foundation.NSData
+import platform.Foundation.NSError
 import platform.Foundation.NSKeyedArchiver
 import platform.Foundation.NSKeyedUnarchiver
 import platform.Foundation.create
@@ -226,14 +232,24 @@ private fun extractElevation(direction: Vector128): Angle? {
 
 private const val VERSION_IOS: Byte = 0x81.toByte()
 
-@Suppress("DEPRECATION")
 internal fun serializeDiscoveryToken(token: NIDiscoveryToken): ByteArray {
-    val tokenData: NSData = NSKeyedArchiver.archivedDataWithRootObject(token)
+    val tokenData: NSData = memScoped {
+        val error = alloc<ObjCObjectVar<NSError?>>()
+        val data = NSKeyedArchiver.archivedDataWithRootObject(
+            `object` = token,
+            requiringSecureCoding = true,
+            error = error.ptr,
+        )
+        if (data == null) {
+            val desc = error.value?.localizedDescription ?: "unknown error"
+            error("NSKeyedArchiver failed to serialize NIDiscoveryToken: $desc")
+        }
+        data
+    }
     val tokenBytes = tokenData.toByteArray()
     return byteArrayOf(VERSION_IOS) + tokenBytes
 }
 
-@Suppress("DEPRECATION")
 internal fun deserializeDiscoveryToken(bytes: ByteArray): NIDiscoveryToken {
     require(bytes.isNotEmpty()) { "SessionParams is empty" }
     require(bytes[0] == VERSION_IOS) {
@@ -241,12 +257,23 @@ internal fun deserializeDiscoveryToken(bytes: ByteArray): NIDiscoveryToken {
     }
     val tokenBytes = bytes.copyOfRange(1, bytes.size)
     val data = tokenBytes.toNSData()
-    val obj = NSKeyedUnarchiver.unarchiveObjectWithData(data)
-    return (obj as? NIDiscoveryToken)
-        ?: error(
-            "Failed to deserialize NIDiscoveryToken from ${tokenBytes.size} bytes — " +
-                "data may be corrupted during OOB transfer",
+    val token: NIDiscoveryToken = memScoped {
+        val error = alloc<ObjCObjectVar<NSError?>>()
+        val obj = NSKeyedUnarchiver.unarchivedObjectOfClass(
+            cls = NIDiscoveryToken,
+            fromData = data,
+            error = error.ptr,
         )
+        if (obj == null) {
+            val desc = error.value?.localizedDescription ?: "unknown error"
+            error(
+                "Failed to deserialize NIDiscoveryToken from ${tokenBytes.size} bytes: $desc — " +
+                    "data may be corrupted during OOB transfer",
+            )
+        }
+        obj as NIDiscoveryToken
+    }
+    return token
 }
 
 internal fun NSData.toByteArray(): ByteArray {
