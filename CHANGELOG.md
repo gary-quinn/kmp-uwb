@@ -11,6 +11,17 @@ _Changes on `main` that have not yet been tagged for release._
 
 ---
 
+## [0.1.3] - 2026-04-01
+
+### Other
+- update Package.swift for v0.1.3
+- refactor!: stabilize core API for Aliro readiness (#21)
+- docs: Revise LICENSE with detailed terms and definitions
+- update Package.swift for v0.1.2
+
+
+---
+
 ## [0.1.2] - 2026-03-30
 
 ### Other
@@ -55,7 +66,8 @@ _Changes on `main` that have not yet been tagged for release._
 - docs: add README, ARCHITECTURE, and ROADMAP
 
 
-[Unreleased]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.0-alpha2...v0.1.1
 [0.1.0]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.0-alpha2...v0.1.0
