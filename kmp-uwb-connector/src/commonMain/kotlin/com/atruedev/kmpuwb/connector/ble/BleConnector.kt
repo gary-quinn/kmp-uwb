@@ -5,6 +5,7 @@ import com.atruedev.kmpble.error.GattStatus
 import com.atruedev.kmpble.gatt.WriteType
 import com.atruedev.kmpble.peripheral.Peripheral
 import com.atruedev.kmpble.peripheral.toPeripheral
+import com.atruedev.kmpble.scanner.Advertisement
 import com.atruedev.kmpble.scanner.Scanner
 import com.atruedev.kmpble.server.AdvertiseConfig
 import com.atruedev.kmpble.server.Advertiser
@@ -41,6 +42,12 @@ public object BleConnector {
         config: BleConnectorConfig = BleConnectorConfig(),
     ): PeerConnector = ControllerConnector(scanner, config)
 
+    internal fun controller(
+        scanner: Scanner,
+        config: BleConnectorConfig = BleConnectorConfig(),
+        peripheralFactory: (Advertisement) -> Peripheral,
+    ): PeerConnector = ControllerConnector(scanner, config, peripheralFactory)
+
     public fun controlee(config: BleConnectorConfig = BleConnectorConfig()): PeerConnector = ControleeConnector(config)
 }
 
@@ -48,6 +55,7 @@ public object BleConnector {
 private class ControllerConnector(
     private val scanner: Scanner,
     private val config: BleConnectorConfig,
+    private val peripheralFactory: (Advertisement) -> Peripheral = { it.toPeripheral() },
 ) : PeerConnector {
     override suspend fun exchange(localParams: SessionParams): SessionParams {
         val peripheral = scanForPeer()
@@ -65,7 +73,7 @@ private class ControllerConnector(
                     scanner.advertisements
                         .first { it.isConnectable }
                 }
-            return advertisement.toPeripheral()
+            return peripheralFactory(advertisement)
         } catch (e: CancellationException) {
             throw e
         } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
