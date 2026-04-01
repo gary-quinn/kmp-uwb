@@ -1,5 +1,3 @@
-@file:OptIn(kotlin.time.ExperimentalTime::class)
-
 package com.atruedev.kmpuwb.connector.ble
 
 import com.atruedev.kmpble.connection.ConnectionOptions
