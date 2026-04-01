@@ -4,11 +4,11 @@ import com.atruedev.kmpuwb.config.RangingConfig
 import com.atruedev.kmpuwb.config.RangingRole
 import com.atruedev.kmpuwb.session.IosPreparedSession
 import com.atruedev.kmpuwb.session.PreparedSession
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.cValue
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.cValue
 import platform.Foundation.NSClassFromString
 import platform.Foundation.NSOperatingSystemVersion
 import platform.Foundation.NSProcessInfo
@@ -57,11 +57,12 @@ internal class IosUwbAdapter : UwbAdapter {
      */
     @OptIn(ExperimentalForeignApi::class)
     private fun isBackgroundRangingAvailable(): Boolean {
-        val version = cValue<NSOperatingSystemVersion> {
-            this.majorVersion = 16
-            this.minorVersion = 0
-            this.patchVersion = 0
-        }
+        val version =
+            cValue<NSOperatingSystemVersion> {
+                this.majorVersion = 16
+                this.minorVersion = 0
+                this.patchVersion = 0
+            }
         return NSProcessInfo.processInfo.isOperatingSystemAtLeastVersion(version)
     }
 }

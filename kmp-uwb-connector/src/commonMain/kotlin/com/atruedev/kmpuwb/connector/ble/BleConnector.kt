@@ -74,12 +74,12 @@ private class ControllerConnector(
                         .first { it.isConnectable }
                 }
             return peripheralFactory(advertisement)
-        } catch (e: CancellationException) {
-            throw e
         } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
             throw ConnectorException(
                 ExchangeTimedOut("No UWB peer found within ${config.scanTimeout}"),
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             throw ConnectorException(
                 TransportFailure("BLE scan failed: ${e.message}", cause = e),
