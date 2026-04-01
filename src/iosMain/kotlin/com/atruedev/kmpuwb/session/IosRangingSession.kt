@@ -13,6 +13,7 @@ import com.atruedev.kmpuwb.state.RangingState
 import kotlinx.cinterop.Vector128
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -43,11 +44,11 @@ import kotlin.coroutines.resumeWithException
 
 internal class IosRangingSession(
     override val config: RangingConfig,
-    existingSession: NISession? = null,
+    private val existingSession: NISession,
 ) : RangingSession {
     private val scope =
         CoroutineScope(
-            SupervisorJob() + Dispatchers.Default.limitedParallelism(1),
+            SupervisorJob() + Dispatchers.Default.limitedParallelism(1) + CoroutineName("UwbRanging"),
         )
 
     private val _state = MutableStateFlow<RangingState>(RangingState.Idle.Ready)
@@ -64,24 +65,7 @@ internal class IosRangingSession(
     private val delegate = SessionDelegate()
     private val tokenCache = DiscoveryTokenCache()
 
-    override suspend fun start(peer: Peer) {
-        check(_state.value is RangingState.Idle.Ready) {
-            "Cannot start session in state ${_state.value}"
-        }
-
-        _state.value = RangingState.Starting.Negotiating
-
-        val session = niSession ?: NISession()
-        niSession = session
-
-        platform.darwin.dispatch_async(platform.darwin.dispatch_get_main_queue()) {
-            session.delegate = delegate
-        }
-
-        _state.value = RangingState.Starting.Initializing
-    }
-
-    internal suspend fun startPrepared(remoteParams: SessionParams) {
+    internal suspend fun startRanging(remoteParams: SessionParams) {
         check(_state.value is RangingState.Idle.Ready) {
             "Cannot start session in state ${_state.value}"
         }
@@ -133,9 +117,10 @@ internal class IosRangingSession(
         ) {
             val nearbyObjects = didUpdateNearbyObjects.filterIsInstance<NINearbyObject>()
             for (obj in nearbyObjects) {
+                val rawDistance = obj.distance.toDouble()
                 val measurement =
                     RangingMeasurement(
-                        distance = Distance.meters(obj.distance.toDouble()),
+                        distance = if (rawDistance >= 0.0) Distance.meters(rawDistance) else null,
                         azimuth = extractAzimuth(obj.direction),
                         elevation = extractElevation(obj.direction),
                     )
@@ -239,18 +224,28 @@ private fun extractElevation(direction: Vector128): Angle? {
     )
 }
 
+private const val VERSION_IOS: Byte = 0x81.toByte()
+
+@Suppress("DEPRECATION")
 internal fun serializeDiscoveryToken(token: NIDiscoveryToken): ByteArray {
-    val data: NSData = NSKeyedArchiver.archivedDataWithRootObject(token)
-    return data.toByteArray()
+    val tokenData: NSData = NSKeyedArchiver.archivedDataWithRootObject(token)
+    val tokenBytes = tokenData.toByteArray()
+    return byteArrayOf(VERSION_IOS) + tokenBytes
 }
 
+@Suppress("DEPRECATION")
 internal fun deserializeDiscoveryToken(bytes: ByteArray): NIDiscoveryToken {
-    val data = bytes.toNSData()
+    require(bytes.isNotEmpty()) { "SessionParams is empty" }
+    require(bytes[0] == VERSION_IOS) {
+        "Incompatible SessionParams version: 0x${bytes[0].toUByte().toString(16)} (expected iOS 0x81)"
+    }
+    val tokenBytes = bytes.copyOfRange(1, bytes.size)
+    val data = tokenBytes.toNSData()
     val obj = NSKeyedUnarchiver.unarchiveObjectWithData(data)
     return (obj as? NIDiscoveryToken)
         ?: error(
-            "Failed to deserialize NIDiscoveryToken from ${bytes.size} bytes — " +
-                "the remote peer may be on an incompatible platform or the data was corrupted during BLE transfer",
+            "Failed to deserialize NIDiscoveryToken from ${tokenBytes.size} bytes — " +
+                "data may be corrupted during OOB transfer",
         )
 }
 
@@ -270,5 +265,3 @@ internal fun ByteArray.toNSData(): NSData {
         NSData.create(bytes = pinned.addressOf(0), length = size.toULong())
     }
 }
-
-public actual fun RangingSession(config: RangingConfig): RangingSession = IosRangingSession(config)

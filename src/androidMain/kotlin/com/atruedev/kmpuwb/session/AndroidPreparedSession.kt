@@ -9,10 +9,9 @@ import androidx.core.uwb.UwbControllerSessionScope
 import androidx.core.uwb.UwbDevice
 import com.atruedev.kmpuwb.config.RangingConfig
 import com.atruedev.kmpuwb.error.SessionLost
-import com.atruedev.kmpuwb.peer.Peer
-import com.atruedev.kmpuwb.peer.PeerAddress
 import com.atruedev.kmpuwb.state.RangingState
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -24,41 +23,35 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 
 internal class AndroidPreparedSession(
     override val config: RangingConfig,
     private val context: Context,
     private val sessionScope: UwbClientSessionScope,
 ) : PreparedSession {
-    private val scope =
-        CoroutineScope(
-            SupervisorJob() + Dispatchers.Default.limitedParallelism(1),
-        )
-    private var consumed: Boolean = false
+    private val consumed = AtomicBoolean(false)
 
     override val localParams: SessionParams by lazy {
-        encodeLocalParams()
+        SessionParamsCodec.encode(
+            address = sessionScope.localAddress,
+            complexChannel = resolveComplexChannel(),
+            sessionId = config.sessionId,
+        )
     }
 
-    override suspend fun startRanging(remoteParams: SessionParams): RangingSession =
-        kotlinx.coroutines.withContext(scope.coroutineContext) {
-            check(!consumed) { "PreparedSession has already been consumed" }
-            consumed = true
-
-            val decoded = decodeRemoteParams(remoteParams)
-            val rangingParameters = buildRangingParameters(decoded)
-            createRangingSession(rangingParameters)
+    override suspend fun startRanging(remoteParams: SessionParams): RangingSession {
+        check(consumed.compareAndSet(false, true)) {
+            "PreparedSession has already been consumed"
         }
+        val decoded = SessionParamsCodec.decode(remoteParams)
+        val rangingParameters = buildRangingParameters(decoded)
+        return createRangingSession(rangingParameters)
+    }
 
     override fun close() {
-        scope.launch {
-            consumed = true
-        }
+        consumed.set(true)
     }
-
-    private fun encodeLocalParams(): SessionParams = SessionParams(sessionScope.localAddress.address)
-
-    private fun decodeRemoteParams(params: SessionParams): Peer = Peer(address = PeerAddress(params.toByteArray()))
 
     private fun resolveComplexChannel(): UwbComplexChannel =
         if (sessionScope is UwbControllerSessionScope) {
@@ -67,20 +60,23 @@ internal class AndroidPreparedSession(
             UwbComplexChannel(config.channel, 0)
         }
 
-    private fun buildRangingParameters(peer: Peer): RangingParameters =
+    private fun buildRangingParameters(decoded: SessionParamsCodec.DecodedParams): RangingParameters =
         RangingParameters(
             uwbConfigType = RangingParameters.CONFIG_UNICAST_DS_TWR,
             sessionId = config.sessionId,
             sessionKeyInfo = config.sessionKey ?: byteArrayOf(),
-            complexChannel = resolveComplexChannel(),
-            peerDevices = listOf(UwbDevice(UwbAddress(peer.address.toByteArray()))),
+            complexChannel = UwbComplexChannel(decoded.channel, decoded.preambleIndex),
+            peerDevices = listOf(UwbDevice(UwbAddress(decoded.address))),
             updateRateType = RangingParameters.RANGING_UPDATE_RATE_AUTOMATIC,
             subSessionId = 0,
             subSessionKeyInfo = null,
         )
 
     private fun createRangingSession(rangingParameters: RangingParameters): RangingSession {
-        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default.limitedParallelism(1))
+        val sessionScope =
+            CoroutineScope(
+                SupervisorJob() + Dispatchers.Default.limitedParallelism(1) + CoroutineName("UwbRanging"),
+            )
         val state = MutableStateFlow<RangingState>(RangingState.Starting.Negotiating)
         val resultChannel =
             Channel<RangingResult>(
@@ -88,12 +84,12 @@ internal class AndroidPreparedSession(
                 onBufferOverflow = BufferOverflow.DROP_OLDEST,
             )
 
-        scope.launch {
+        sessionScope.launch {
             try {
                 state.value = RangingState.Starting.Initializing
                 state.value = RangingState.Active.Ranging
 
-                sessionScope.prepareSession(rangingParameters).collect { platformResult ->
+                this@AndroidPreparedSession.sessionScope.prepareSession(rangingParameters).collect { platformResult ->
                     val result = platformResult.toRangingResult()
                     if (result != null) {
                         resultChannel.trySend(result)
@@ -113,16 +109,16 @@ internal class AndroidPreparedSession(
             }
         }
 
-        return PreparedAndroidRangingSession(
+        return AndroidRangingSession(
             config = config,
-            scope = scope,
+            scope = sessionScope,
             _state = state,
             resultChannel = resultChannel,
         )
     }
 }
 
-private class PreparedAndroidRangingSession(
+private class AndroidRangingSession(
     override val config: RangingConfig,
     private val scope: CoroutineScope,
     private val _state: MutableStateFlow<RangingState>,
@@ -130,8 +126,6 @@ private class PreparedAndroidRangingSession(
 ) : RangingSession {
     override val state: StateFlow<RangingState> = _state.asStateFlow()
     override val rangingResults = resultChannel.receiveAsFlow()
-
-    override suspend fun start(peer: Peer): Unit = error("PreparedSession-created sessions are already started")
 
     override fun close() {
         if (_state.value !is RangingState.Stopped) {

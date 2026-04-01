@@ -2,7 +2,6 @@ package com.atruedev.kmpuwb.adapter
 
 import android.content.Context
 import android.content.pm.PackageManager
-import android.util.Log
 import androidx.core.uwb.UwbManager
 import com.atruedev.kmpuwb.config.RangingConfig
 import com.atruedev.kmpuwb.config.RangingRole
@@ -15,6 +14,8 @@ import kotlinx.coroutines.flow.asStateFlow
 internal class AndroidUwbAdapter(
     private val context: Context,
 ) : UwbAdapter {
+    // Snapshot state — Android UWB SDK does not provide a state-change broadcast.
+    // Re-query via UwbAdapter() if the user toggles UWB in Settings.
     private val _state = MutableStateFlow(resolveAdapterState())
 
     override val state: StateFlow<UwbAdapterState> = _state.asStateFlow()
@@ -50,16 +51,17 @@ internal class AndroidUwbAdapter(
         return AndroidPreparedSession(config, context, sessionScope)
     }
 
+    override fun close() = Unit
+
     private fun resolveAdapterState(): UwbAdapterState {
-        val hasFeature =
-            context.packageManager.hasSystemFeature(PackageManager.FEATURE_UWB)
+        val hasFeature = context.packageManager.hasSystemFeature(PackageManager.FEATURE_UWB)
+        if (!hasFeature) return UwbAdapterState.UNSUPPORTED
 
-        Log.d("kmp-uwb", "PackageManager.FEATURE_UWB = $hasFeature")
-
-        return if (hasFeature) {
+        return try {
+            UwbManager.createInstance(context)
             UwbAdapterState.ON
-        } else {
-            UwbAdapterState.UNSUPPORTED
+        } catch (_: Exception) {
+            UwbAdapterState.OFF
         }
     }
 }

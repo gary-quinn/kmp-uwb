@@ -30,40 +30,21 @@ class FakeRangingSessionTest {
         )
 
     @Test
-    fun initialStateIsIdleReady() {
+    fun defaultStateIsActiveRanging() {
         val session = FakeRangingSession()
-        assertIs<RangingState.Idle.Ready>(session.state.value)
+        assertIs<RangingState.Active.Ranging>(session.state.value)
     }
 
     @Test
-    fun startEmitsFullStateSequence() =
-        runTest {
-            val session = FakeRangingSession()
-
-            session.state.test {
-                assertIs<RangingState.Idle.Ready>(awaitItem())
-
-                session.start(testPeer)
-
-                assertIs<RangingState.Starting.Negotiating>(awaitItem())
-                assertIs<RangingState.Starting.Initializing>(awaitItem())
-                assertIs<RangingState.Active.Ranging>(awaitItem())
-            }
-        }
-
-    @Test
-    fun startAddsPeerToActivePeers() =
-        runTest {
-            val session = FakeRangingSession()
-            session.start(testPeer)
-            assertTrue(session.activePeers.contains(testPeer))
-        }
+    fun customInitialState() {
+        val session = FakeRangingSession(initialState = RangingState.Idle.Ready)
+        assertIs<RangingState.Idle.Ready>(session.state.value)
+    }
 
     @Test
     fun closeEmitsStoppedByRequest() =
         runTest {
             val session = FakeRangingSession()
-            session.start(testPeer)
 
             session.state.test {
                 assertIs<RangingState.Active.Ranging>(awaitItem())
@@ -78,7 +59,7 @@ class FakeRangingSessionTest {
     fun closeClearsActivePeers() =
         runTest {
             val session = FakeRangingSession()
-            session.start(testPeer)
+            session.addPeer(testPeer)
             session.close()
             assertTrue(session.activePeers.isEmpty())
         }
@@ -87,7 +68,6 @@ class FakeRangingSessionTest {
     fun emitResultDeliversToRangingResults() =
         runTest {
             val session = FakeRangingSession()
-            session.start(testPeer)
 
             val position = RangingResult.Position(testPeer, testMeasurement)
 
@@ -105,7 +85,6 @@ class FakeRangingSessionTest {
     fun multipleResultsArriveInOrder() =
         runTest {
             val session = FakeRangingSession()
-            session.start(testPeer)
 
             val position1 = RangingResult.Position(testPeer, testMeasurement)
             val position2 =
@@ -120,11 +99,11 @@ class FakeRangingSessionTest {
 
                 val first = awaitItem()
                 assertIs<RangingResult.Position>(first)
-                assertEquals(2.5, first.measurement.distance.meters)
+                assertEquals(2.5, first.measurement.distance?.meters)
 
                 val second = awaitItem()
                 assertIs<RangingResult.Position>(second)
-                assertEquals(3.0, second.measurement.distance.meters)
+                assertEquals(3.0, second.measurement.distance?.meters)
             }
         }
 
@@ -132,7 +111,7 @@ class FakeRangingSessionTest {
     fun simulatePeerLostEmitsResultAndUpdatesState() =
         runTest {
             val session = FakeRangingSession()
-            session.start(testPeer)
+            session.addPeer(testPeer)
 
             session.rangingResults.test {
                 session.simulatePeerLost(testPeer)
@@ -150,7 +129,7 @@ class FakeRangingSessionTest {
     fun simulatePeerRecoveredEmitsResultAndUpdatesState() =
         runTest {
             val session = FakeRangingSession()
-            session.start(testPeer)
+            session.addPeer(testPeer)
 
             val recovered = RangingResult.PeerRecovered(testPeer, testMeasurement)
 
@@ -173,7 +152,6 @@ class FakeRangingSessionTest {
     fun simulateErrorClosesRangingResults() =
         runTest {
             val session = FakeRangingSession()
-            session.start(testPeer)
 
             val error = SessionLost("test error")
 
@@ -191,7 +169,6 @@ class FakeRangingSessionTest {
     fun simulateSuspendAndResumeStateSequence() =
         runTest {
             val session = FakeRangingSession()
-            session.start(testPeer)
 
             session.state.test {
                 assertIs<RangingState.Active.Ranging>(awaitItem())
@@ -208,7 +185,6 @@ class FakeRangingSessionTest {
     fun simulatePeerDisconnectClosesRangingResults() =
         runTest {
             val session = FakeRangingSession()
-            session.start(testPeer)
 
             session.rangingResults.test {
                 session.simulatePeerDisconnect()

@@ -7,21 +7,26 @@ import kotlin.time.Duration.Companion.milliseconds
  * Configuration for a UWB ranging session.
  *
  * Built via the [rangingConfig] DSL function. Immutable after construction.
+ *
+ * **Platform support:** [role], [channel], [sessionId], and [sessionKey] are used by
+ * both Android and iOS. [rangingInterval], [angleOfArrival], and [stsMode] are accepted
+ * for forward compatibility but currently ignored — Android uses automatic update rate
+ * and DS-TWR config, iOS delegates to NearbyInteraction defaults.
  */
 public data class RangingConfig(
-    /** Role this device plays in the session. */
+    /** Role this device plays in the session. Used on both platforms. */
     val role: RangingRole,
-    /** How often ranging measurements are taken. */
+    /** Reserved for future use. Android uses RANGING_UPDATE_RATE_AUTOMATIC. */
     val rangingInterval: Duration = DEFAULT_RANGING_INTERVAL,
-    /** Whether Angle of Arrival measurements are requested. */
+    /** Reserved for future use. Both platforms report AoA when hardware supports it. */
     val angleOfArrival: Boolean = true,
-    /** Security mode for the ranging session. */
+    /** Reserved for future use. Android uses CONFIG_UNICAST_DS_TWR. */
     val stsMode: StsMode = StsMode.DYNAMIC,
-    /** UWB channel number (5 or 9 per FiRa). */
+    /** UWB channel number (5 or 9 per FiRa). Used on both platforms. */
     val channel: Int = DEFAULT_CHANNEL,
-    /** Session identifier shared between controller and controlee. */
+    /** Session identifier shared between controller and controlee. Used on both platforms. */
     val sessionId: Int = 0,
-    /** Pre-shared key for STS. Null uses platform-generated keys. */
+    /** Pre-shared key for STS. Null uses platform-generated keys. Used on Android. */
     val sessionKey: ByteArray? = null,
 ) {
     init {

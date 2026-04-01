@@ -7,12 +7,9 @@ package com.atruedev.kmpuwb.ranging
  * for a specific peer at a specific point in time.
  */
 public data class RangingMeasurement(
-    /** Measured distance to the peer. */
-    val distance: Distance,
-    /** Horizontal angle relative to the device. Null if AoA is unsupported or disabled. */
+    /** Measured distance to the peer. Null when the device cannot determine distance. */
+    val distance: Distance? = null,
     val azimuth: Angle? = null,
-    /** Vertical angle relative to the device. Null if AoA is unsupported or disabled. */
     val elevation: Angle? = null,
-    /** Measurement accuracy as a standard deviation in meters. Null if unavailable. */
     val distanceAccuracy: Distance? = null,
 )
