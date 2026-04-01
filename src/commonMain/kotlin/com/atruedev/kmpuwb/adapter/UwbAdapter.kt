@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
  */
 public interface UwbAdapter : AutoCloseable {
     public val state: StateFlow<UwbAdapterState>
+
     public suspend fun capabilities(): UwbCapabilities
 
     /**

@@ -9,8 +9,6 @@ import androidx.core.uwb.UwbControllerSessionScope
 import androidx.core.uwb.UwbDevice
 import com.atruedev.kmpuwb.config.RangingConfig
 import com.atruedev.kmpuwb.error.SessionLost
-import com.atruedev.kmpuwb.peer.Peer
-import com.atruedev.kmpuwb.peer.PeerAddress
 import com.atruedev.kmpuwb.state.RangingState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
@@ -75,9 +73,10 @@ internal class AndroidPreparedSession(
         )
 
     private fun createRangingSession(rangingParameters: RangingParameters): RangingSession {
-        val sessionScope = CoroutineScope(
-            SupervisorJob() + Dispatchers.Default.limitedParallelism(1) + CoroutineName("UwbRanging"),
-        )
+        val sessionScope =
+            CoroutineScope(
+                SupervisorJob() + Dispatchers.Default.limitedParallelism(1) + CoroutineName("UwbRanging"),
+            )
         val state = MutableStateFlow<RangingState>(RangingState.Starting.Negotiating)
         val resultChannel =
             Channel<RangingResult>(

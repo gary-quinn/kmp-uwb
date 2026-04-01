@@ -265,4 +265,3 @@ internal fun ByteArray.toNSData(): NSData {
         NSData.create(bytes = pinned.addressOf(0), length = size.toULong())
     }
 }
-
