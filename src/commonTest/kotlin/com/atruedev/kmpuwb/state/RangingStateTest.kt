@@ -1,8 +1,12 @@
 package com.atruedev.kmpuwb.state
 
+import com.atruedev.kmpuwb.error.ChipsetError
 import com.atruedev.kmpuwb.error.SessionLost
+import com.atruedev.kmpuwb.error.UwbUnavailable
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNotEquals
 
 class RangingStateTest {
     @Test
@@ -12,18 +16,39 @@ class RangingStateTest {
     }
 
     @Test
+    fun idleUnsupportedIsIdle() {
+        val state: RangingState = RangingState.Idle.Unsupported
+        assertIs<RangingState.Idle>(state)
+    }
+
+    @Test
+    fun startingNegotiatingIsStarting() {
+        val state: RangingState = RangingState.Starting.Negotiating
+        assertIs<RangingState.Starting>(state)
+    }
+
+    @Test
+    fun startingInitializingIsStarting() {
+        val state: RangingState = RangingState.Starting.Initializing
+        assertIs<RangingState.Starting>(state)
+    }
+
+    @Test
     fun activeRangingIsActive() {
         val state: RangingState = RangingState.Active.Ranging
         assertIs<RangingState.Active>(state)
     }
 
     @Test
-    fun stoppedByErrorCarriesError() {
-        val error = SessionLost("connection lost")
-        val state = RangingState.Stopped.ByError(error)
+    fun activeSuspendedIsActive() {
+        val state: RangingState = RangingState.Active.Suspended
+        assertIs<RangingState.Active>(state)
+    }
 
-        assertIs<RangingState.Stopped>(state)
-        assertIs<SessionLost>(state.error)
+    @Test
+    fun activePeerLostIsActive() {
+        val state: RangingState = RangingState.Active.PeerLost
+        assertIs<RangingState.Active>(state)
     }
 
     @Test
@@ -33,23 +58,62 @@ class RangingStateTest {
     }
 
     @Test
-    fun suspendedIsActive() {
-        val state: RangingState = RangingState.Active.Suspended
-        assertIs<RangingState.Active>(state)
+    fun stoppedByPeerIsTerminal() {
+        val state: RangingState = RangingState.Stopped.ByPeer
+        assertIs<RangingState.Stopped>(state)
     }
 
     @Test
-    fun statesCanBeExhaustivelyMatched() {
-        val state: RangingState = RangingState.Starting.Negotiating
+    fun stoppedBySystemEventIsTerminal() {
+        val state: RangingState = RangingState.Stopped.BySystemEvent
+        assertIs<RangingState.Stopped>(state)
+    }
 
-        val description =
+    @Test
+    fun stoppedByErrorCarriesError() {
+        val error = SessionLost("connection lost")
+        val state = RangingState.Stopped.ByError(error)
+
+        assertIs<RangingState.Stopped>(state)
+        assertIs<SessionLost>(state.error)
+        assertEquals("connection lost", state.error.message)
+    }
+
+    @Test
+    fun stoppedByErrorWithDifferentErrorTypes() {
+        val sessionError = RangingState.Stopped.ByError(SessionLost("lost"))
+        val hardwareError = RangingState.Stopped.ByError(UwbUnavailable())
+        val chipsetError = RangingState.Stopped.ByError(ChipsetError(42, "chipset fault"))
+
+        assertNotEquals(sessionError, hardwareError)
+        assertNotEquals(hardwareError, chipsetError)
+    }
+
+    @Test
+    fun exhaustiveMatchCoversAllStates() {
+        val allStates: List<RangingState> =
+            listOf(
+                RangingState.Idle.Ready,
+                RangingState.Idle.Unsupported,
+                RangingState.Starting.Negotiating,
+                RangingState.Starting.Initializing,
+                RangingState.Active.Ranging,
+                RangingState.Active.Suspended,
+                RangingState.Active.PeerLost,
+                RangingState.Stopped.ByRequest,
+                RangingState.Stopped.ByPeer,
+                RangingState.Stopped.ByError(SessionLost("test")),
+                RangingState.Stopped.BySystemEvent,
+            )
+
+        assertEquals(11, allStates.size)
+        allStates.forEach { state ->
             when (state) {
-                is RangingState.Idle -> "idle"
-                is RangingState.Starting -> "starting"
-                is RangingState.Active -> "active"
-                is RangingState.Stopped -> "stopped"
+                is RangingState.Idle -> {}
+                is RangingState.Starting -> {}
+                is RangingState.Active -> {}
+                is RangingState.Stopped -> {}
             }
-
-        kotlin.test.assertEquals("starting", description)
+        }
     }
 }

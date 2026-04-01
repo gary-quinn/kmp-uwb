@@ -17,24 +17,21 @@ import kotlinx.coroutines.flow.receiveAsFlow
 /**
  * Test double for [RangingSession] that allows injecting measurements and simulating errors.
  *
+ * Created in [RangingState.Active.Ranging] by default — matching real sessions
+ * returned by [com.atruedev.kmpuwb.session.PreparedSession.startRanging].
+ *
  * ```
  * val session = FakeRangingSession()
- * session.start(peer)
- *
- * // Inject a measurement
  * session.emitResult(RangingResult.Position(peer, measurement))
- *
- * // Simulate peer loss
  * session.simulatePeerLost(peer)
- *
- * // Simulate session error
  * session.simulateError(SessionLost("connection lost"))
  * ```
  */
 public class FakeRangingSession(
     override val config: RangingConfig = DEFAULT_CONFIG,
+    initialState: RangingState = RangingState.Active.Ranging,
 ) : RangingSession {
-    private val _state = MutableStateFlow<RangingState>(RangingState.Idle.Ready)
+    private val _state = MutableStateFlow(initialState)
     override val state: StateFlow<RangingState> = _state.asStateFlow()
 
     private val resultChannel = Channel<RangingResult>(capacity = Channel.UNLIMITED)
@@ -42,31 +39,20 @@ public class FakeRangingSession(
 
     private val _activePeers: MutableSet<Peer> = mutableSetOf()
 
-    /** Peers currently in range (immutable snapshot). */
     public val activePeers: Set<Peer> get() = _activePeers.toSet()
 
-    override suspend fun start(peer: Peer) {
-        check(_state.value is RangingState.Idle.Ready) {
-            "Cannot start session in state ${_state.value}"
-        }
-        _state.value = RangingState.Starting.Negotiating
-        _state.value = RangingState.Starting.Initializing
-        _state.value = RangingState.Active.Ranging
-        _activePeers.add(peer)
-    }
-
     override fun close() {
-        _state.value = RangingState.Stopped.ByRequest
+        if (_state.value !is RangingState.Stopped) {
+            _state.value = RangingState.Stopped.ByRequest
+        }
         _activePeers.clear()
         resultChannel.close()
     }
 
-    /** Emit a ranging result to collectors. */
     public fun emitResult(result: RangingResult) {
         resultChannel.trySend(result)
     }
 
-    /** Simulate a peer moving out of range. */
     public fun simulatePeerLost(peer: Peer) {
         _activePeers.remove(peer)
         resultChannel.trySend(RangingResult.PeerLost(peer))
@@ -75,35 +61,34 @@ public class FakeRangingSession(
         }
     }
 
-    /** Simulate a peer returning to range with a new measurement. */
     public fun simulatePeerRecovered(result: RangingResult.PeerRecovered) {
         _activePeers.add(result.peer)
         resultChannel.trySend(result)
         _state.value = RangingState.Active.Ranging
     }
 
-    /** Simulate a session error. */
     public fun simulateError(error: UwbError) {
         _state.value = RangingState.Stopped.ByError(error)
         _activePeers.clear()
         resultChannel.close()
     }
 
-    /** Simulate the app being backgrounded. */
     public fun simulateSuspend() {
         _state.value = RangingState.Active.Suspended
     }
 
-    /** Simulate the app returning to foreground. */
     public fun simulateResume() {
         _state.value = RangingState.Active.Ranging
     }
 
-    /** Simulate the remote peer ending the session. */
     public fun simulatePeerDisconnect() {
         _state.value = RangingState.Stopped.ByPeer
         _activePeers.clear()
         resultChannel.close()
+    }
+
+    public fun addPeer(peer: Peer) {
+        _activePeers.add(peer)
     }
 
     public companion object {

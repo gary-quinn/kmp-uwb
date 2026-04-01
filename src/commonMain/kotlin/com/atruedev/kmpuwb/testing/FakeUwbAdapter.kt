@@ -60,6 +60,8 @@ public class FakeUwbAdapter(
         _state.value = UwbAdapterState.UNSUPPORTED
     }
 
+    override fun close(): Unit = Unit
+
     public companion object {
         public val DEFAULT_CAPABILITIES: UwbCapabilities =
             UwbCapabilities(

@@ -170,7 +170,7 @@ private class ControleeConnector(
                     characteristic(UwbOobService.CONTROLEE_PARAMS_UUID) {
                         properties {
                             read = true
-                            notify = true
+                            indicate = true
                         }
                         permissions {
                             read = true
@@ -199,7 +199,7 @@ private class ControleeConnector(
                     val bytes = remoteParamsDeferred.await()
                     val device = connectedDevice.await()
 
-                    server.notify(
+                    server.indicate(
                         UwbOobService.CONTROLEE_PARAMS_UUID,
                         device,
                         BleData(localBytes),

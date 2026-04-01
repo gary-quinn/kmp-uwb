@@ -15,6 +15,8 @@ internal class IosUwbAdapter : UwbAdapter {
 
     override val state: StateFlow<UwbAdapterState> = _state.asStateFlow()
 
+    override fun close() = Unit
+
     override suspend fun capabilities(): UwbCapabilities {
         if (_state.value == UwbAdapterState.UNSUPPORTED) {
             return UwbCapabilities.NONE

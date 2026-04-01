@@ -2,25 +2,32 @@ package com.atruedev.kmpuwb.adapter
 
 import android.content.Context
 import android.content.pm.PackageManager
-import android.util.Log
 import androidx.core.uwb.UwbManager
 import com.atruedev.kmpuwb.config.RangingConfig
 import com.atruedev.kmpuwb.config.RangingRole
 import com.atruedev.kmpuwb.session.AndroidPreparedSession
 import com.atruedev.kmpuwb.session.PreparedSession
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
 
 internal class AndroidUwbAdapter(
     private val context: Context,
 ) : UwbAdapter {
-    private val _state = MutableStateFlow(resolveAdapterState())
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    override val state: StateFlow<UwbAdapterState> = _state.asStateFlow()
+    override val state: StateFlow<UwbAdapterState> =
+        flow { emit(resolveAdapterState()) }
+            .stateIn(scope, SharingStarted.Lazily, resolveAdapterState())
 
     override suspend fun capabilities(): UwbCapabilities {
-        if (_state.value == UwbAdapterState.UNSUPPORTED) {
+        if (state.value == UwbAdapterState.UNSUPPORTED) {
             return UwbCapabilities.NONE
         }
 
@@ -50,16 +57,19 @@ internal class AndroidUwbAdapter(
         return AndroidPreparedSession(config, context, sessionScope)
     }
 
+    override fun close() {
+        scope.cancel()
+    }
+
     private fun resolveAdapterState(): UwbAdapterState {
-        val hasFeature =
-            context.packageManager.hasSystemFeature(PackageManager.FEATURE_UWB)
+        val hasFeature = context.packageManager.hasSystemFeature(PackageManager.FEATURE_UWB)
+        if (!hasFeature) return UwbAdapterState.UNSUPPORTED
 
-        Log.d("kmp-uwb", "PackageManager.FEATURE_UWB = $hasFeature")
-
-        return if (hasFeature) {
+        return try {
+            UwbManager.createInstance(context)
             UwbAdapterState.ON
-        } else {
-            UwbAdapterState.UNSUPPORTED
+        } catch (_: Exception) {
+            UwbAdapterState.OFF
         }
     }
 }

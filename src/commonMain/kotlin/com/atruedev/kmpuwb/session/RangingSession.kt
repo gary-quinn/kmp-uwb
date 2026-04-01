@@ -1,7 +1,6 @@
 package com.atruedev.kmpuwb.session
 
 import com.atruedev.kmpuwb.config.RangingConfig
-import com.atruedev.kmpuwb.peer.Peer
 import com.atruedev.kmpuwb.state.RangingState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -9,61 +8,31 @@ import kotlinx.coroutines.flow.StateFlow
 /**
  * A UWB ranging session with one or more peers.
  *
- * Lifecycle is managed explicitly via [start] and [close].
- * State transitions are observable via [state].
- * Ranging measurements are emitted as a cold [Flow] via [rangingResults].
+ * Obtained exclusively via [PreparedSession.startRanging] after exchanging
+ * session parameters with a remote peer over an out-of-band transport.
  *
- * Implements [AutoCloseable] for structured resource cleanup.
+ * State transitions are observable via [state].
+ * Ranging measurements are emitted via [rangingResults] with DROP_OLDEST
+ * backpressure — stale measurements are discarded if the consumer falls behind.
  *
  * ```
- * val session = RangingSession(config)
- * session.start(peer)
- * session.rangingResults.collect { result ->
- *     when (result) {
- *         is RangingResult.Position -> handlePosition(result)
- *         is RangingResult.PeerLost -> handlePeerLost(result)
- *         is RangingResult.PeerRecovered -> handleRecovered(result)
- *     }
- * }
+ * val prepared = adapter.prepareSession(config)
+ * // ... exchange params via BLE/NFC ...
+ * val session = prepared.startRanging(remoteParams)
+ * session.rangingResults.collect { result -> ... }
  * session.close()
  * ```
  */
 public interface RangingSession : AutoCloseable {
-    /** Configuration this session was created with. */
     public val config: RangingConfig
-
-    /** Current state of the ranging session. Always-readable. */
     public val state: StateFlow<RangingState>
-
-    /**
-     * Start ranging with the specified peer.
-     *
-     * Transitions state from [RangingState.Idle] through
-     * [RangingState.Starting] to [RangingState.Active].
-     *
-     * @throws IllegalStateException if the session is not in [RangingState.Idle.Ready].
-     */
-    public suspend fun start(peer: Peer)
-
-    /**
-     * Ranging measurements as a hot [Flow] backed by a buffered channel.
-     *
-     * Results are emitted after [start] is called and buffered until
-     * collection begins. Uses DROP_OLDEST backpressure — stale measurements
-     * are discarded if the consumer falls behind.
-     * The flow completes when the session enters [RangingState.Stopped].
-     */
     public val rangingResults: Flow<RangingResult>
 
     /**
-     * Stop ranging and release resources.
+     * Stop ranging and release platform resources.
      *
      * Transitions state to [RangingState.Stopped.ByRequest].
-     * Safe to call multiple times. After close, the session
-     * cannot be restarted.
+     * Safe to call multiple times.
      */
     override fun close()
 }
-
-/** Create a platform-specific [RangingSession]. */
-public expect fun RangingSession(config: RangingConfig): RangingSession

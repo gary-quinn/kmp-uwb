@@ -12,11 +12,8 @@ import kotlinx.coroutines.flow.StateFlow
  *
  * Obtain an instance via [UwbAdapter] factory function.
  */
-public interface UwbAdapter {
-    /** Current state of the UWB adapter. Always-readable [StateFlow]. */
+public interface UwbAdapter : AutoCloseable {
     public val state: StateFlow<UwbAdapterState>
-
-    /** Hardware capabilities of this device's UWB chipset. */
     public suspend fun capabilities(): UwbCapabilities
 
     /**
@@ -25,10 +22,10 @@ public interface UwbAdapter {
      * Allocates platform resources and generates [PreparedSession.localParams]
      * for out-of-band exchange with a remote peer. Call [PreparedSession.startRanging]
      * after exchanging parameters, or [PreparedSession.close] to release resources.
-     *
-     * @see com.atruedev.kmpuwb.connector.PeerConnector
      */
     public suspend fun prepareSession(config: RangingConfig): PreparedSession
+
+    override fun close()
 }
 
 /** Create a platform-specific [UwbAdapter] instance. */

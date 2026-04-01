@@ -19,20 +19,18 @@ internal class IosPreparedSession private constructor(
     private val niSession: NISession,
     override val localParams: SessionParams,
 ) : PreparedSession {
-    private var consumed: Boolean = false
+    private val consumed = kotlin.concurrent.AtomicInt(0)
 
     override suspend fun startRanging(remoteParams: SessionParams): RangingSession {
-        check(!consumed) { "PreparedSession has already been consumed" }
-        consumed = true
+        check(consumed.compareAndSet(0, 1)) { "PreparedSession has already been consumed" }
 
         val rangingSession = IosRangingSession(config, existingSession = niSession)
-        rangingSession.startPrepared(remoteParams)
+        rangingSession.startRanging(remoteParams)
         return rangingSession
     }
 
     override fun close() {
-        if (!consumed) {
-            consumed = true
+        if (consumed.compareAndSet(0, 1)) {
             dispatch_async(dispatch_get_main_queue()) {
                 niSession.invalidate()
             }

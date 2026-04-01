@@ -23,7 +23,7 @@ internal fun androidx.core.uwb.RangingResult.toRangingResult(): RangingResult? =
 
 internal fun RangingPosition.toMeasurement(): RangingMeasurement =
     RangingMeasurement(
-        distance = Distance.meters(this.distance?.value?.toDouble() ?: 0.0),
+        distance = this.distance?.value?.toDouble()?.let { Distance.meters(it) },
         azimuth = this.azimuth?.let { Angle.degrees(it.value.toDouble()) },
         elevation = this.elevation?.let { Angle.degrees(it.value.toDouble()) },
     )

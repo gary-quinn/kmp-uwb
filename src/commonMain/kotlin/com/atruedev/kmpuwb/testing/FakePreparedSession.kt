@@ -33,7 +33,7 @@ public class FakePreparedSession(
         lastRemoteParams = remoteParams
 
         val session = sessionFactory(config)
-        session.start(Peer(address = PeerAddress(remoteParams.toByteArray())))
+        session.addPeer(Peer(address = PeerAddress(remoteParams.toByteArray())))
         return session
     }
 

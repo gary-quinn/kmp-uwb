@@ -16,6 +16,8 @@ internal class JvmUwbAdapter : UwbAdapter {
         throw UnsupportedOperationException(
             "UWB is not available on JVM. Use FakeUwbAdapter for testing.",
         )
+
+    override fun close() = Unit
 }
 
 public actual fun UwbAdapter(): UwbAdapter = JvmUwbAdapter()
