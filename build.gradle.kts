@@ -60,6 +60,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
         }
         commonTest.dependencies {
+            implementation(project(":kmp-uwb-testing"))
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
             implementation(libs.turbine)
@@ -68,6 +69,21 @@ kotlin {
             implementation(libs.androidx.core)
             implementation(libs.androidx.core.uwb)
             implementation(libs.androidx.startup)
+        }
+    }
+}
+
+// KGP does not wire consumerProguardFiles for KMP android targets.
+// https://youtrack.jetbrains.com/issue/KT-module-proguard (track upstream fix)
+run {
+    val taskName = "bundleAndroidMainAar"
+    val rules = file("src/androidMain/consumer-rules.pro")
+    tasks.withType<Zip>().matching { it.name == taskName }.configureEach {
+        from(rules) { rename { "proguard.txt" } }
+    }
+    afterEvaluate {
+        check(tasks.findByName(taskName) != null) {
+            "Expected task '$taskName' not found — KGP may have renamed it. ProGuard rules will not be bundled."
         }
     }
 }
