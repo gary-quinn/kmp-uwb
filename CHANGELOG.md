@@ -11,6 +11,18 @@ _Changes on `main` that have not yet been tagged for release._
 
 ---
 
+## [0.1.5] - 2026-04-02
+
+### Changed
+- refactor: extract test fakes to kmp-uwb-testing module (#25)
+
+### Other
+- update Package.swift for v0.1.5
+- update Package.swift for v0.1.4
+
+
+---
+
 ## [0.1.4] - 2026-04-02
 
 ### Other
@@ -76,7 +88,8 @@ _Changes on `main` that have not yet been tagged for release._
 - docs: add README, ARCHITECTURE, and ROADMAP
 
 
-[Unreleased]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.4...HEAD
+[Unreleased]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.5...HEAD
+[0.1.5]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.1...v0.1.2
