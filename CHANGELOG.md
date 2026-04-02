@@ -11,6 +11,16 @@ _Changes on `main` that have not yet been tagged for release._
 
 ---
 
+## [0.1.4] - 2026-04-02
+
+### Other
+- update Package.swift for v0.1.4
+- fix(ios): replace deprecated APIs, runtime capabilities, connector tests (#23)
+- update Package.swift for v0.1.3
+
+
+---
+
 ## [0.1.3] - 2026-04-01
 
 ### Other
@@ -66,7 +76,8 @@ _Changes on `main` that have not yet been tagged for release._
 - docs: add README, ARCHITECTURE, and ROADMAP
 
 
-[Unreleased]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.4...HEAD
+[0.1.4]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.0-alpha2...v0.1.1
