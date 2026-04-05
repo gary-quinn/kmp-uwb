@@ -23,7 +23,7 @@ androidx-core-uwb = { module = "androidx.core.uwb:uwb", version.ref = "androidx-
 androidx-core-uwb-rxjava3 = { module = "androidx.core.uwb:uwb-rxjava3", version.ref = "androidx-core-uwb" }
 androidx-startup = { module = "androidx.startup:startup-runtime", version = "1.2.0" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
-kmp-ble = { module = "com.atruedev:kmp-ble", version = "v0.3.7" }
+kmp-ble = { module = "com.atruedev:kmp-ble", version = "v0.3.12" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivityCompose" }
 
 [plugins]
