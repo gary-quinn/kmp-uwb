@@ -40,6 +40,10 @@ kotlin {
                 .toInt()
 
         withHostTestBuilder {}.configure {}
+
+        withDeviceTestBuilder {}.configure {
+            instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        }
     }
 
     jvm()
@@ -68,6 +72,24 @@ kotlin {
             implementation(libs.androidx.core)
             implementation(libs.androidx.core.uwb)
             implementation(libs.androidx.startup)
+        }
+        val androidHostTest by getting {
+            dependencies {
+                implementation(libs.kotlin.test)
+                implementation(libs.kotlinx.coroutines.test)
+                implementation(libs.robolectric)
+                implementation(libs.androidx.test.core)
+            }
+        }
+        val androidDeviceTest by getting {
+            dependencies {
+                implementation(libs.kotlin.test)
+                implementation(libs.kotlinx.coroutines.test)
+                implementation(libs.turbine)
+                implementation(libs.androidx.test.core)
+                implementation(libs.androidx.test.runner)
+                implementation(libs.androidx.test.ext.junit)
+            }
         }
     }
 }
