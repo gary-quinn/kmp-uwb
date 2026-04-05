@@ -192,4 +192,4 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for full design documentation.
 
 ## License
 
-[Apache 2.0](LICENSE) — Copyright (C) 2026 Huynh Thien Thach
+[Apache 2.0](LICENSE) — Copyright (C) 2026 Gary Quinn
