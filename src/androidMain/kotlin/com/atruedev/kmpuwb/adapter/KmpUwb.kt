@@ -16,4 +16,11 @@ public object KmpUwb {
         }
         return appContext
     }
+
+    @Suppress("VisibleForTesting")
+    internal fun reset() {
+        val field = KmpUwb::class.java.getDeclaredField("appContext")
+        field.isAccessible = true
+        field.set(this, null)
+    }
 }
