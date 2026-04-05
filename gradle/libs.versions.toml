@@ -12,6 +12,10 @@ androidCompileSdk = "36"
 androidx-core = "1.18.0"
 androidx-core-uwb = "1.0.0-beta01"
 turbine = "1.2.1"
+robolectric = "4.14.1"
+androidx-test-core = "1.6.1"
+androidx-test-runner = "1.6.2"
+androidx-test-ext-junit = "1.2.1"
 
 [libraries]
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
@@ -25,6 +29,10 @@ androidx-startup = { module = "androidx.startup:startup-runtime", version = "1.2
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 kmp-ble = { module = "com.atruedev:kmp-ble", version = "v0.3.12" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivityCompose" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+androidx-test-core = { module = "androidx.test:core-ktx", version.ref = "androidx-test-core" }
+androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidx-test-runner" }
+androidx-test-ext-junit = { module = "androidx.test.ext:junit-ktx", version.ref = "androidx-test-ext-junit" }
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
