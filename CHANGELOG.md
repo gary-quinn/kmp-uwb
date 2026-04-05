@@ -11,6 +11,17 @@ _Changes on `main` that have not yet been tagged for release._
 
 ---
 
+## [0.1.7] - 2026-04-05
+
+### Changed
+- test(android): add platform bridge tests and CI instrumented job
+
+### Fixed
+- fix(ci): handle squash merge PR numbers in changelog generation
+
+
+---
+
 ## [0.1.6] - 2026-04-05
 
 ### Other
@@ -102,7 +113,8 @@ _Changes on `main` that have not yet been tagged for release._
 - docs: add README, ARCHITECTURE, and ROADMAP
 
 
-[Unreleased]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.6...HEAD
+[Unreleased]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.7...HEAD
+[0.1.7]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.3...v0.1.4
