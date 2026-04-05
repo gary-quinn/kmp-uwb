@@ -11,6 +11,20 @@ _Changes on `main` that have not yet been tagged for release._
 
 ---
 
+## [0.1.6] - 2026-04-05
+
+### Other
+- update Package.swift for v0.1.6
+- fix(ci): strip v prefix from VERSION env var in publish workflow (#30)
+- build(dependabot): bump com.atruedev:kmp-ble from v0.3.7 to v0.3.12 (#29)
+- build(dependabot): bump androidx.activity:activity-compose (#27)
+- ci(dependabot): bump gradle/actions from 6.0.1 to 6.1.0 (#28)
+- Update README.md
+- update Package.swift for v0.1.5
+
+
+---
+
 ## [0.1.5] - 2026-04-02
 
 ### Changed
@@ -88,7 +102,8 @@ _Changes on `main` that have not yet been tagged for release._
 - docs: add README, ARCHITECTURE, and ROADMAP
 
 
-[Unreleased]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.5...HEAD
+[Unreleased]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.6...HEAD
+[0.1.6]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.2...v0.1.3
