@@ -68,21 +68,29 @@ Everything needed to build production UWB ranging apps on Android and iOS from s
 
 **Theme:** API stability commitment backed by production usage.
 
-**Criteria:**
+**Checklist:**
 
-API stability:
-- Core module API (`UwbAdapter`, `RangingSession`, `RangingConfig`, `PreparedSession`) unchanged for 2+ minor releases
-- Deprecation cycle enforced: deprecated APIs survive at least 1 minor release before removal
-- All public APIs have KDoc documentation
+API surface:
+- [ ] Core APIs (`UwbAdapter`, `RangingSession`, `RangingConfig`, `PreparedSession`) unchanged for 2+ minor releases
+- [ ] API review with binary compatibility validation ([kotlinx-binary-compatibility-validator](https://github.com/Kotlin/binary-compatibility-validator))
+- [ ] Deprecation policy enforced: deprecated APIs survive at least 1 minor release before removal
+- [ ] All public APIs have KDoc documentation
 
 Quality:
-- Zero known critical bugs at release time
-- Test coverage for all public API entry points
-- CI green on both Android and iOS targets
+- [ ] Zero known critical bugs at release time
+- [ ] Test coverage for all public API entry points
+- [ ] iOS integration tests beyond commonTest
+- [ ] Hardware test plan executed with results documented
+- [ ] Performance benchmarks: ranging latency, battery impact
+
+Documentation:
+- [x] `kmp-uwb-connector` module documented in README
+- [x] BLE + UWB out-of-band integration guide
+- [x] Versioning and release criteria in CONTRIBUTING.md
 
 Distribution:
-- Semantic versioning strictly followed from v1.0 onward
-- CHANGELOG.md covers every release
+- [ ] Semantic versioning strictly followed from v1.0 onward
+- [ ] CHANGELOG.md covers every release
 
 ---
 
