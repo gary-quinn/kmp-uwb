@@ -2,6 +2,7 @@
 
 package com.atruedev.kmpuwb.session
 
+import com.atruedev.kmpuwb.config.BackpressureStrategy
 import com.atruedev.kmpuwb.config.RangingConfig
 import com.atruedev.kmpuwb.error.SessionLost
 import com.atruedev.kmpuwb.peer.Peer
@@ -23,8 +24,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -51,6 +50,7 @@ import kotlin.coroutines.resumeWithException
 internal class IosRangingSession(
     override val config: RangingConfig,
     private val existingSession: NISession,
+    backpressureStrategy: BackpressureStrategy,
 ) : RangingSession {
     private val scope =
         CoroutineScope(
@@ -60,11 +60,7 @@ internal class IosRangingSession(
     private val _state = MutableStateFlow<RangingState>(RangingState.Idle.Ready)
     override val state: StateFlow<RangingState> = _state.asStateFlow()
 
-    private val resultChannel =
-        Channel<RangingResult>(
-            capacity = 64,
-            onBufferOverflow = BufferOverflow.DROP_OLDEST,
-        )
+    private val resultChannel = createResultChannel(backpressureStrategy)
     override val rangingResults: Flow<RangingResult> = resultChannel.receiveAsFlow()
 
     private var niSession: NISession? = existingSession

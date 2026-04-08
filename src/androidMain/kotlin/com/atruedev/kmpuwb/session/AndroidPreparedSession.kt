@@ -7,6 +7,7 @@ import androidx.core.uwb.UwbClientSessionScope
 import androidx.core.uwb.UwbComplexChannel
 import androidx.core.uwb.UwbControllerSessionScope
 import androidx.core.uwb.UwbDevice
+import com.atruedev.kmpuwb.config.BackpressureStrategy
 import com.atruedev.kmpuwb.config.RangingConfig
 import com.atruedev.kmpuwb.error.SessionLost
 import com.atruedev.kmpuwb.state.RangingState
@@ -16,7 +17,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,13 +40,16 @@ internal class AndroidPreparedSession(
         )
     }
 
-    override suspend fun startRanging(remoteParams: SessionParams): RangingSession {
+    override suspend fun startRanging(
+        remoteParams: SessionParams,
+        backpressureStrategy: BackpressureStrategy,
+    ): RangingSession {
         check(consumed.compareAndSet(false, true)) {
             "PreparedSession has already been consumed"
         }
         val decoded = SessionParamsCodec.decode(remoteParams)
         val rangingParameters = buildRangingParameters(decoded)
-        return createRangingSession(rangingParameters)
+        return createRangingSession(rangingParameters, backpressureStrategy)
     }
 
     override fun close() {
@@ -72,17 +75,16 @@ internal class AndroidPreparedSession(
             subSessionKeyInfo = null,
         )
 
-    private fun createRangingSession(rangingParameters: RangingParameters): RangingSession {
+    private fun createRangingSession(
+        rangingParameters: RangingParameters,
+        backpressureStrategy: BackpressureStrategy,
+    ): RangingSession {
         val sessionScope =
             CoroutineScope(
                 SupervisorJob() + Dispatchers.Default.limitedParallelism(1) + CoroutineName("UwbRanging"),
             )
         val state = MutableStateFlow<RangingState>(RangingState.Starting.Negotiating)
-        val resultChannel =
-            Channel<RangingResult>(
-                capacity = 64,
-                onBufferOverflow = BufferOverflow.DROP_OLDEST,
-            )
+        val resultChannel = createResultChannel(backpressureStrategy)
 
         sessionScope.launch {
             try {

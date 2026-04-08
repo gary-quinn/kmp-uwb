@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_Changes on `main` that have not yet been tagged for release._
+### Added
+- Configurable `BackpressureStrategy` for ranging measurements: `KeepLatest`, `Unbounded`, `KeepOldest` (#36)
+- `BackpressureStrategy` parameter on `PreparedSession.startRanging()` and `startWithConnector()`
+
+### Changed
+- Extract shared `createResultChannel()` factory for Android and iOS ranging pipelines
 
 ---
 

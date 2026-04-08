@@ -1,6 +1,7 @@
 package com.atruedev.kmpuwb.connector
 
 import com.atruedev.kmpuwb.adapter.UwbAdapter
+import com.atruedev.kmpuwb.config.BackpressureStrategy
 import com.atruedev.kmpuwb.config.RangingConfig
 import com.atruedev.kmpuwb.session.RangingSession
 
@@ -15,12 +16,13 @@ import com.atruedev.kmpuwb.session.RangingSession
 public suspend fun UwbAdapter.startWithConnector(
     config: RangingConfig,
     connector: PeerConnector,
+    backpressureStrategy: BackpressureStrategy = BackpressureStrategy.KeepLatest,
 ): RangingSession {
     val prepared = prepareSession(config)
-    // Not using prepared.use {} — on success, ownership transfers to the returned RangingSession
+    // Not using prepared.use {} — on success, ownership transfers to the returned RangingSession.
     try {
         val remoteParams = connector.exchange(prepared.localParams)
-        return prepared.startRanging(remoteParams)
+        return prepared.startRanging(remoteParams, backpressureStrategy)
     } catch (e: Throwable) {
         prepared.close()
         throw e
