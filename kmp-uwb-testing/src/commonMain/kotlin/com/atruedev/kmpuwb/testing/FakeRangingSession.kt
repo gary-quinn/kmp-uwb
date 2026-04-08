@@ -34,6 +34,7 @@ public class FakeRangingSession(
     private val _state = MutableStateFlow(initialState)
     override val state: StateFlow<RangingState> = _state.asStateFlow()
 
+    // Always UNLIMITED so test emissions never block regardless of assertion timing.
     private val resultChannel = Channel<RangingResult>(capacity = Channel.UNLIMITED)
     override val rangingResults: Flow<RangingResult> = resultChannel.receiveAsFlow()
 

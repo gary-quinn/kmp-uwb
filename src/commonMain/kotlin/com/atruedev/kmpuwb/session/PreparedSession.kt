@@ -1,5 +1,6 @@
 package com.atruedev.kmpuwb.session
 
+import com.atruedev.kmpuwb.config.BackpressureStrategy
 import com.atruedev.kmpuwb.config.RangingConfig
 
 /**
@@ -28,10 +29,18 @@ public interface PreparedSession : AutoCloseable {
      *
      * Each platform decodes [remoteParams] into its native representation
      * (Android: UwbAddress + ComplexChannel; iOS: NIDiscoveryToken).
+     *
+     * [backpressureStrategy] controls how measurements are buffered when the
+     * consumer falls behind — kept separate from [config] because it is a
+     * client-side delivery concern, not a UWB protocol parameter.
+     *
      * This method consumes the prepared session — calling it again throws
      * [IllegalStateException].
      */
-    public suspend fun startRanging(remoteParams: SessionParams): RangingSession
+    public suspend fun startRanging(
+        remoteParams: SessionParams,
+        backpressureStrategy: BackpressureStrategy = BackpressureStrategy.KeepLatest,
+    ): RangingSession
 
     override fun close()
 }

@@ -1,5 +1,6 @@
 package com.atruedev.kmpuwb.testing
 
+import com.atruedev.kmpuwb.config.BackpressureStrategy
 import com.atruedev.kmpuwb.config.RangingConfig
 import com.atruedev.kmpuwb.peer.Peer
 import com.atruedev.kmpuwb.peer.PeerAddress
@@ -21,16 +22,23 @@ public class FakePreparedSession(
     public var lastRemoteParams: SessionParams? = null
         private set
 
+    public var lastBackpressureStrategy: BackpressureStrategy? = null
+        private set
+
     public var closeCalled: Boolean = false
         private set
 
     private var consumed: Boolean = false
 
-    override suspend fun startRanging(remoteParams: SessionParams): RangingSession {
+    override suspend fun startRanging(
+        remoteParams: SessionParams,
+        backpressureStrategy: BackpressureStrategy,
+    ): RangingSession {
         check(!consumed) { "PreparedSession has already been consumed" }
         consumed = true
         startRangingCalled = true
         lastRemoteParams = remoteParams
+        lastBackpressureStrategy = backpressureStrategy
 
         val session = sessionFactory(config)
         session.addPeer(Peer(address = PeerAddress(remoteParams.toByteArray())))

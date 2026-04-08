@@ -2,6 +2,7 @@
 
 package com.atruedev.kmpuwb.session
 
+import com.atruedev.kmpuwb.config.BackpressureStrategy
 import com.atruedev.kmpuwb.config.RangingConfig
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
@@ -21,10 +22,14 @@ internal class IosPreparedSession private constructor(
 ) : PreparedSession {
     private val consumed = kotlin.concurrent.AtomicInt(0)
 
-    override suspend fun startRanging(remoteParams: SessionParams): RangingSession {
+    override suspend fun startRanging(
+        remoteParams: SessionParams,
+        backpressureStrategy: BackpressureStrategy,
+    ): RangingSession {
         check(consumed.compareAndSet(0, 1)) { "PreparedSession has already been consumed" }
 
-        val rangingSession = IosRangingSession(config, existingSession = niSession)
+        val rangingSession =
+            IosRangingSession(config, existingSession = niSession, backpressureStrategy = backpressureStrategy)
         rangingSession.startRanging(remoteParams)
         return rangingSession
     }
