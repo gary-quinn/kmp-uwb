@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_Changes on `main` that have not yet been tagged for release._
+
+---
+
+## [0.2.0] - 2026-04-08
+
+### Added
+- feat: add configurable BackpressureStrategy for ranging measurements
+
+### Other
+- docs: add connector documentation, versioning policy, and 1.0 roadmap
+
 ### Added
 - Configurable `BackpressureStrategy` for ranging measurements: `KeepLatest`, `Unbounded`, `KeepOldest` (#36)
 - `BackpressureStrategy` parameter on `PreparedSession.startRanging()` and `startWithConnector()`
@@ -118,7 +130,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - docs: add README, ARCHITECTURE, and ROADMAP
 
 
-[Unreleased]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.7...HEAD
+[Unreleased]: https://github.com/gary-quinn/kmp-uwb/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.7...v0.2.0
 [0.1.7]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.4...v0.1.5
