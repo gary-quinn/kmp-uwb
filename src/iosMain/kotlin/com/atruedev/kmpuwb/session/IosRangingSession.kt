@@ -23,8 +23,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -60,11 +58,7 @@ internal class IosRangingSession(
     private val _state = MutableStateFlow<RangingState>(RangingState.Idle.Ready)
     override val state: StateFlow<RangingState> = _state.asStateFlow()
 
-    private val resultChannel =
-        Channel<RangingResult>(
-            capacity = 64,
-            onBufferOverflow = BufferOverflow.DROP_OLDEST,
-        )
+    private val resultChannel = createResultChannel(config.backpressureStrategy)
     override val rangingResults: Flow<RangingResult> = resultChannel.receiveAsFlow()
 
     private var niSession: NISession? = existingSession

@@ -12,8 +12,9 @@ import kotlinx.coroutines.flow.StateFlow
  * session parameters with a remote peer over an out-of-band transport.
  *
  * State transitions are observable via [state].
- * Ranging measurements are emitted via [rangingResults] with DROP_OLDEST
- * backpressure — stale measurements are discarded if the consumer falls behind.
+ * Ranging measurements are emitted via [rangingResults] using the
+ * [BackpressureStrategy][com.atruedev.kmpuwb.config.BackpressureStrategy]
+ * specified in [config].
  *
  * ```
  * val prepared = adapter.prepareSession(config)

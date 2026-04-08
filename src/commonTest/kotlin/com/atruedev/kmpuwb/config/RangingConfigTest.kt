@@ -31,6 +31,7 @@ class RangingConfigTest {
         assertEquals(StsMode.DYNAMIC, config.stsMode)
         assertEquals(9, config.channel)
         assertEquals(0, config.sessionId)
+        assertEquals(BackpressureStrategy.Latest, config.backpressureStrategy)
     }
 
     @Test

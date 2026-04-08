@@ -26,6 +26,8 @@ public data class RangingConfig(
     val channel: Int = DEFAULT_CHANNEL,
     /** Session identifier shared between controller and controlee. Used on both platforms. */
     val sessionId: Int = 0,
+    /** Controls how ranging measurements are buffered when the consumer falls behind. */
+    val backpressureStrategy: BackpressureStrategy = BackpressureStrategy.Latest,
     /** Pre-shared key for STS. Null uses platform-generated keys. Used on Android. */
     val sessionKey: ByteArray? = null,
 ) {
@@ -47,6 +49,7 @@ public data class RangingConfig(
             stsMode == other.stsMode &&
             channel == other.channel &&
             sessionId == other.sessionId &&
+            backpressureStrategy == other.backpressureStrategy &&
             sessionKey.contentEquals(other.sessionKey)
     }
 
@@ -57,6 +60,7 @@ public data class RangingConfig(
         result = 31 * result + stsMode.hashCode()
         result = 31 * result + channel
         result = 31 * result + sessionId
+        result = 31 * result + backpressureStrategy.hashCode()
         result = 31 * result + (sessionKey?.contentHashCode() ?: 0)
         return result
     }
@@ -78,6 +82,7 @@ public class RangingConfigBuilder {
     public var stsMode: StsMode = StsMode.DYNAMIC
     public var channel: Int = RangingConfig.DEFAULT_CHANNEL
     public var sessionId: Int = 0
+    public var backpressureStrategy: BackpressureStrategy = BackpressureStrategy.Latest
     public var sessionKey: ByteArray? = null
 
     public fun build(): RangingConfig =
@@ -88,6 +93,7 @@ public class RangingConfigBuilder {
             stsMode = stsMode,
             channel = channel,
             sessionId = sessionId,
+            backpressureStrategy = backpressureStrategy,
             sessionKey = sessionKey,
         )
 }

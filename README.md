@@ -22,6 +22,14 @@ Part of the **kmp** library family alongside [kmp-ble](https://github.com/gary-q
 | **Test Without Hardware** | `FakeRangingSession` and `FakeUwbAdapter` for full UWB simulation in unit tests |
 | **FiRa Compliant** | Static, Dynamic, and Provisioned STS security modes. Controller/Controlee roles |
 
+## Modules
+
+| Module | Artifact | Description |
+|--------|----------|-------------|
+| **kmp-uwb** | `com.atruedev:kmp-uwb` | Core UWB library — adapter, sessions, ranging, state machine |
+| **kmp-uwb-connector** | `com.atruedev:kmp-uwb-connector` | BLE-based out-of-band parameter exchange using [kmp-ble](https://github.com/gary-quinn/kmp-ble) |
+| **kmp-uwb-testing** | `com.atruedev:kmp-uwb-testing` | Test doubles — `FakeRangingSession`, `FakeUwbAdapter`, `FakePreparedSession` |
+
 ## Setup
 
 ### Android / KMP (Gradle)
@@ -157,6 +165,91 @@ fakeSession.emitResult(
 fakeSession.simulateError(SessionLost(message = "connection dropped"))
 ```
 
+### Configure backpressure
+
+```kotlin
+val config = rangingConfig {
+    role = RangingRole.CONTROLLER
+    backpressureStrategy = BackpressureStrategy.Buffer // keep every measurement
+}
+```
+
+| Strategy | Behavior | Use case |
+|----------|----------|----------|
+| `Latest` (default) | Drop oldest when buffer full | Real-time UI |
+| `Buffer` | Unbounded buffer | Analytics, replay |
+| `Drop` | Drop newest when buffer full | Strict arrival order processing |
+
+## kmp-uwb-connector
+
+The connector module automates BLE-based out-of-band (OOB) parameter exchange — the handshake every UWB session requires before ranging can start.
+
+```kotlin
+// Add the connector dependency alongside the core module
+commonMain.dependencies {
+    implementation("com.atruedev:kmp-uwb-connector:<latest-version>")
+}
+```
+
+### Controller side
+
+```kotlin
+val scanner = Scanner { filters { match { serviceUuid(UwbOobService.SERVICE_UUID) } } }
+val connector = BleConnector.controller(scanner)
+
+try {
+    val session = adapter.startWithConnector(config, connector)
+    session.rangingResults.collect { result -> /* ... */ }
+} catch (e: ConnectorException) {
+    when (e.error) {
+        is ExchangeTimedOut -> println("No peer found")
+        is TransportFailure -> println("BLE failed: ${e.message}")
+        is InvalidRemoteParams -> println("Bad params: ${e.message}")
+    }
+}
+```
+
+### Controlee side
+
+```kotlin
+val connector = BleConnector.controlee()
+val session = adapter.startWithConnector(config, connector)
+```
+
+### BLE + UWB integration flow
+
+A complete ranging session requires both BLE (for discovery and parameter exchange) and UWB (for ranging). The typical flow:
+
+```
+Controller                              Controlee
+    │                                       │
+    │  1. BLE scan for UwbOobService UUID   │
+    │ ────────────────────────────────────>  │  ← BLE advertise
+    │                                       │
+    │  2. BLE connect                       │
+    │ ────────────────────────────────────>  │
+    │                                       │
+    │  3. Write local UWB params            │
+    │ ────────────────────────────────────>  │  ← GATT write
+    │                                       │
+    │  4. Read remote UWB params            │
+    │ <────────────────────────────────────  │  ← GATT indicate
+    │                                       │
+    │  5. UWB ranging session starts        │
+    │ <═══════════════════════════════════>  │  ← UWB TWR
+```
+
+`startWithConnector` orchestrates steps 1-5 automatically. For custom OOB transports (NFC, WiFi Direct), implement the `PeerConnector` interface:
+
+```kotlin
+val session = adapter.startWithConnector(config) { localParams ->
+    // Send localParams over your transport
+    myTransport.send(localParams.toByteArray())
+    // Receive remote params
+    SessionParams(myTransport.receive())
+}
+```
+
 ## Relationship with kmp-ble
 
 kmp-uwb and kmp-ble are **independent libraries** with no compile-time dependency. They share the same design philosophy:
@@ -176,7 +269,7 @@ A typical spatial app might use kmp-ble for device discovery and data exchange, 
 
 - **State machine:** 10 states with sealed interface hierarchy — exhaustive `when` branches
 - **Per-session concurrency:** `limitedParallelism(1)` serialization, no locks
-- **Hot Flow ranging:** `Channel(64, DROP_OLDEST)` — consumers always see the latest measurement
+- **Configurable backpressure:** `BackpressureStrategy` (Latest, Buffer, Drop) for ranging results pipeline
 - **Value classes:** `Distance` and `Angle` are zero-allocation wrappers with unit conversion
 - **Composable errors:** Sealed interfaces — `SessionError`, `RangingError`, `HardwareError`, `SecurityError`
 - **Defensive copies:** `PeerAddress` copies on construction and access — no aliasing bugs

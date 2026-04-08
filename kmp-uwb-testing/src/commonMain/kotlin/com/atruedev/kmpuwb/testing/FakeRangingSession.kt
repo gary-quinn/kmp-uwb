@@ -34,6 +34,7 @@ public class FakeRangingSession(
     private val _state = MutableStateFlow(initialState)
     override val state: StateFlow<RangingState> = _state.asStateFlow()
 
+    // UNLIMITED regardless of config.backpressureStrategy — test emissions must never block.
     private val resultChannel = Channel<RangingResult>(capacity = Channel.UNLIMITED)
     override val rangingResults: Flow<RangingResult> = resultChannel.receiveAsFlow()
 

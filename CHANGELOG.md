@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_Changes on `main` that have not yet been tagged for release._
+### Added
+- Configurable `BackpressureStrategy` for ranging measurements: Latest, Buffer, Drop (#36)
+- `kmp-uwb-connector` module documentation in README (#37)
+- BLE + UWB out-of-band integration guide (#39)
+- CONTRIBUTING.md with versioning and release criteria (#38)
+- 1.0 release checklist in ROADMAP.md (#40)
+
+### Changed
+- Extract shared `createResultChannel()` factory for Android and iOS ranging pipelines
 
 ---
 

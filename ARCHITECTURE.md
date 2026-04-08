@@ -105,22 +105,23 @@ Layer 3: Consumer API (caller's coroutine context)
 ### Hot Flow with Bounded Buffer
 
 ```kotlin
-private val resultChannel = Channel<RangingResult>(
-    capacity = 64,
-    onBufferOverflow = BufferOverflow.DROP_OLDEST,
-)
+private val resultChannel = createResultChannel(config.backpressureStrategy)
 override val rangingResults: Flow<RangingResult> = resultChannel.receiveAsFlow()
 ```
 
 UWB measurements arrive at high frequency (~5 Hz). The pipeline is designed for this:
 
-- **`Channel(64, DROP_OLDEST)`** — if a consumer falls behind, stale measurements are silently dropped. The consumer always sees the most recent data.
+- **Configurable `BackpressureStrategy`** — consumers choose how buffering behaves:
+  - `Latest` (default): `Channel(64, DROP_OLDEST)` — stale measurements dropped, consumer sees latest data
+  - `Buffer`: `Channel(UNLIMITED)` — all measurements buffered for analytics/replay
+  - `Drop`: `Channel(64, DROP_LATEST)` — newest measurements dropped, strict arrival order preserved
 - **`receiveAsFlow()`** — converts the channel to a cold-on-subscription Flow. Unlike `channelFlow`, this doesn't start a new platform session per collector.
 - **`trySend()`** — non-suspending send from platform callbacks. Never blocks the OS callback thread.
+- **`createResultChannel()`** — shared factory in `commonMain` used by both Android and iOS, avoiding duplicated channel construction logic.
 
 ### Why Not SharedFlow?
 
-`MutableSharedFlow(replay=0)` drops values when no collector is active. `MutableSharedFlow(replay=1)` replays stale data to new collectors. The channel approach gives explicit buffer control with `DROP_OLDEST` semantics — the right trade-off for real-time sensor data.
+`MutableSharedFlow(replay=0)` drops values when no collector is active. `MutableSharedFlow(replay=1)` replays stale data to new collectors. The channel approach gives explicit buffer control — the right trade-off for real-time sensor data.
 
 ### Single Session Start
 
@@ -287,7 +288,7 @@ fake.simulateUnsupported() // state → UNSUPPORTED
 |----------|-----------|
 | Separate repo from kmp-ble | Different hardware, different APIs, different release cadence. No compile-time coupling |
 | `expect/actual` factory functions | `UwbAdapter()` and `RangingSession(config)` look like constructors but dispatch to platform implementations. No DI framework required |
-| Channel over SharedFlow | Explicit buffer control with `DROP_OLDEST` for real-time sensor data |
+| Channel over SharedFlow | Explicit buffer control via configurable `BackpressureStrategy` for real-time sensor data |
 | Content-based PeerAddress | `ByteArray` referential equality is a footgun. Regular class with `contentEquals` prevents subtle bugs |
 | Single-writer concurrency | `limitedParallelism(1)` serializes all state mutations per session without locks |
 | JVM stubs | Lets common tests run on host. Desktop UWB is not a current target |

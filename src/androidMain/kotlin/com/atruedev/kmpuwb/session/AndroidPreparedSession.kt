@@ -16,7 +16,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -78,11 +77,7 @@ internal class AndroidPreparedSession(
                 SupervisorJob() + Dispatchers.Default.limitedParallelism(1) + CoroutineName("UwbRanging"),
             )
         val state = MutableStateFlow<RangingState>(RangingState.Starting.Negotiating)
-        val resultChannel =
-            Channel<RangingResult>(
-                capacity = 64,
-                onBufferOverflow = BufferOverflow.DROP_OLDEST,
-            )
+        val resultChannel = createResultChannel(config.backpressureStrategy)
 
         sessionScope.launch {
             try {
