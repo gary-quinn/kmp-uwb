@@ -14,22 +14,7 @@ import kotlin.test.assertIs
 class KmpUwbInitTest {
     @BeforeTest
     fun resetKmpUwb() {
-        // Reset the lateinit field via reflection so each test starts clean
-        val field = KmpUwb::class.java.getDeclaredField("appContext")
-        field.isAccessible = true
-        // Use the underlying delegate to clear it — set to a sentinel we can detect
-        // Actually, we need to check if it's initialized first. For lateinit, we use
-        // the Kotlin reflection approach:
-        try {
-            // Force-clear by setting accessible and nulling the backing field
-            val backingField = KmpUwb::class.java.getDeclaredField("appContext")
-            backingField.isAccessible = true
-            // lateinit backing fields are non-null in Kotlin but nullable in JVM bytecode
-            @Suppress("UNCHECKED_CAST")
-            (backingField as java.lang.reflect.Field).set(KmpUwb, null)
-        } catch (_: Exception) {
-            // Field may already be unset
-        }
+        KmpUwb.reset()
     }
 
     @Test

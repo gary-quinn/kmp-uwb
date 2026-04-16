@@ -18,6 +18,7 @@ internal object SessionParamsCodec {
     private const val HEADER_SIZE = 2 // version + addressLen
     private const val CHANNEL_AND_PREAMBLE_SIZE = 2
     private const val SESSION_ID_SIZE = 4
+    private const val MAX_UWB_ADDRESS_SIZE = 8 // FiRa: short (2B) or extended (8B)
 
     data class DecodedParams(
         val address: ByteArray,
@@ -73,6 +74,9 @@ internal object SessionParamsCodec {
         }
 
         val addressLen = buffer.get().toInt() and 0xFF
+        require(addressLen in 1..MAX_UWB_ADDRESS_SIZE) {
+            "Invalid UWB address length: $addressLen (expected 1-$MAX_UWB_ADDRESS_SIZE)"
+        }
         require(buffer.remaining() >= addressLen + CHANNEL_AND_PREAMBLE_SIZE + SESSION_ID_SIZE) {
             "SessionParams truncated: expected ${addressLen + CHANNEL_AND_PREAMBLE_SIZE + SESSION_ID_SIZE} more bytes, got ${buffer.remaining()}"
         }

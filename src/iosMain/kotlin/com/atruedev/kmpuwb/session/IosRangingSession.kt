@@ -57,6 +57,8 @@ internal class IosRangingSession(
             SupervisorJob() + Dispatchers.Default.limitedParallelism(1) + CoroutineName("UwbRanging"),
         )
 
+    private val closed = kotlin.concurrent.AtomicInt(0)
+
     private val _state = MutableStateFlow<RangingState>(RangingState.Idle.Ready)
     override val state: StateFlow<RangingState> = _state.asStateFlow()
 
@@ -72,10 +74,9 @@ internal class IosRangingSession(
             "Cannot start session in state ${_state.value}"
         }
 
-        _state.value = RangingState.Starting.Negotiating
-
         val session = niSession ?: error("NISession not initialized")
 
+        // Safe to set directly — delegate is not yet assigned, no concurrent writers.
         _state.value = RangingState.Starting.Initializing
 
         val peerToken = deserializeDiscoveryToken(remoteParams.toByteArray())
@@ -96,6 +97,7 @@ internal class IosRangingSession(
     }
 
     override fun close() {
+        if (!closed.compareAndSet(0, 1)) return
         val session = niSession
         niSession = null
         if (session != null) {
@@ -103,11 +105,16 @@ internal class IosRangingSession(
                 session.invalidate()
             }
         }
-        if (_state.value !is RangingState.Stopped) {
-            _state.value = RangingState.Stopped.ByRequest
+        val job =
+            scope.launch {
+                if (_state.value !is RangingState.Stopped) {
+                    _state.value = RangingState.Stopped.ByRequest
+                }
+            }
+        job.invokeOnCompletion {
+            resultChannel.close()
+            scope.cancel()
         }
-        resultChannel.close()
-        scope.cancel()
     }
 
     private inner class SessionDelegate :
@@ -117,6 +124,7 @@ internal class IosRangingSession(
             session: NISession,
             didUpdateNearbyObjects: List<*>,
         ) {
+            if (closed.value != 0) return
             val nearbyObjects = didUpdateNearbyObjects.filterIsInstance<NINearbyObject>()
             for (obj in nearbyObjects) {
                 val rawDistance = obj.distance.toDouble()
@@ -144,6 +152,7 @@ internal class IosRangingSession(
             didRemoveNearbyObjects: List<*>,
             withReason: NINearbyObjectRemovalReason,
         ) {
+            if (closed.value != 0) return
             val removedObjects = didRemoveNearbyObjects.filterIsInstance<NINearbyObject>()
             for (obj in removedObjects) {
                 val peer = Peer(address = tokenCache.resolve(obj.discoveryToken))
@@ -154,10 +163,12 @@ internal class IosRangingSession(
         }
 
         override fun sessionWasSuspended(session: NISession) {
+            if (closed.value != 0) return
             scope.launch { _state.value = RangingState.Active.Suspended }
         }
 
         override fun sessionSuspensionEnded(session: NISession) {
+            if (closed.value != 0) return
             scope.launch { _state.value = RangingState.Active.Ranging }
         }
 
@@ -165,12 +176,15 @@ internal class IosRangingSession(
             session: NISession,
             didInvalidateWithError: platform.Foundation.NSError,
         ) {
+            if (closed.value != 0) return
             val error =
                 SessionLost(
                     message = "NearbyInteraction session invalidated: ${didInvalidateWithError.localizedDescription}",
                 )
-            scope.launch { _state.value = RangingState.Stopped.ByError(error) }
-            resultChannel.close()
+            scope.launch {
+                _state.value = RangingState.Stopped.ByError(error)
+                resultChannel.close()
+            }
         }
 
         override fun session(

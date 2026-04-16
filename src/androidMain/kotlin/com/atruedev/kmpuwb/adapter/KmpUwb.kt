@@ -3,24 +3,21 @@ package com.atruedev.kmpuwb.adapter
 import android.content.Context
 
 public object KmpUwb {
-    internal lateinit var appContext: Context
-        private set
+    private var contextHolder: Context? = null
+
+    internal val appContext: Context
+        get() =
+            contextHolder ?: error(
+                "Call KmpUwb.init(context) in your Application.onCreate() before using kmp-uwb",
+            )
 
     public fun init(context: Context) {
-        appContext = context.applicationContext
+        contextHolder = context.applicationContext
     }
 
-    internal fun requireContext(): Context {
-        check(::appContext.isInitialized) {
-            "Call KmpUwb.init(context) in your Application.onCreate() before using kmp-uwb"
-        }
-        return appContext
-    }
+    internal fun requireContext(): Context = appContext
 
-    @Suppress("VisibleForTesting")
     internal fun reset() {
-        val field = KmpUwb::class.java.getDeclaredField("appContext")
-        field.isAccessible = true
-        field.set(this, null)
+        contextHolder = null
     }
 }

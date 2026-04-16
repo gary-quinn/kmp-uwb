@@ -168,6 +168,35 @@ class SessionParamsCodecTest {
     }
 
     @Test
+    fun decodeRejectsOversizedAddress() {
+        // addressLen = 16, exceeds FiRa max of 8
+        val header = byteArrayOf(0x01, 0x10)
+        val address = ByteArray(16) { (it + 1).toByte() }
+        val trailer = byteArrayOf(0x09, 0x00, 0x00, 0x00, 0x00, 0x01)
+        assertFailsWith<IllegalArgumentException> {
+            SessionParamsCodec.decode(SessionParams(header + address + trailer))
+        }
+    }
+
+    @Test
+    fun decodeRejectsZeroLengthAddress() {
+        val bytes =
+            byteArrayOf(
+                0x01, // version
+                0x00, // addressLen = 0
+                0x09,
+                0x00, // channel, preamble
+                0x00,
+                0x00,
+                0x00,
+                0x01, // sessionId
+            )
+        assertFailsWith<IllegalArgumentException> {
+            SessionParamsCodec.decode(SessionParams(bytes))
+        }
+    }
+
+    @Test
     fun decodedParamsEquality() {
         val a =
             SessionParamsCodec.DecodedParams(
