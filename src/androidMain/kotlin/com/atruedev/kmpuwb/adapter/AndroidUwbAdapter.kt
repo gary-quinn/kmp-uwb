@@ -7,6 +7,7 @@ import com.atruedev.kmpuwb.config.RangingConfig
 import com.atruedev.kmpuwb.config.RangingRole
 import com.atruedev.kmpuwb.session.AndroidPreparedSession
 import com.atruedev.kmpuwb.session.PreparedSession
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,7 +37,10 @@ internal class AndroidUwbAdapter(
                 supportedChannels = capabilities.supportedChannels.toSet(),
                 backgroundRangingSupported = capabilities.isBackgroundRangingSupported,
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (_: Exception) {
+            // Android UWB SDK (alpha) does not document specific exception types.
             UwbCapabilities.NONE
         }
     }
@@ -61,6 +65,7 @@ internal class AndroidUwbAdapter(
             UwbManager.createInstance(context)
             UwbAdapterState.ON
         } catch (_: Exception) {
+            // Alpha SDK — any createInstance() failure means UWB is unavailable.
             UwbAdapterState.OFF
         }
     }

@@ -130,6 +130,10 @@ private class ControllerConnector(
             }
 
             return SessionParams(remoteBytes)
+        } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+            throw ConnectorException(
+                ExchangeTimedOut("BLE param exchange timed out within ${config.exchangeTimeout}", cause = e),
+            )
         } catch (e: CancellationException) {
             throw e
         } catch (e: ConnectorException) {
@@ -142,11 +146,7 @@ private class ControllerConnector(
     }
 
     private fun safeDisconnect(peripheral: Peripheral) {
-        try {
-            peripheral.close()
-        } catch (_: Exception) {
-            // cleanup errors must not mask the original
-        }
+        closeQuietly { peripheral.close() }
     }
 }
 
@@ -223,6 +223,10 @@ private class ControleeConnector(
             }
 
             return SessionParams(remoteBytes)
+        } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+            throw ConnectorException(
+                ExchangeTimedOut("BLE controlee exchange timed out", cause = e),
+            )
         } catch (e: CancellationException) {
             throw e
         } catch (e: ConnectorException) {
@@ -232,21 +236,17 @@ private class ControleeConnector(
                 TransportFailure("BLE controlee exchange failed: ${e.message}", cause = e),
             )
         } finally {
-            try {
-                advertiser.stopAdvertising()
-            } catch (_: Exception) {
-                // cleanup
-            }
-            try {
-                advertiser.close()
-            } catch (_: Exception) {
-                // cleanup
-            }
-            try {
-                server.close()
-            } catch (_: Exception) {
-                // cleanup
-            }
+            closeQuietly { advertiser.stopAdvertising() }
+            closeQuietly { advertiser.close() }
+            closeQuietly { server.close() }
         }
+    }
+}
+
+/** Swallows exceptions from [block] so cleanup failures don't mask the original. */
+private inline fun closeQuietly(block: () -> Unit) {
+    try {
+        block()
+    } catch (_: Exception) {
     }
 }

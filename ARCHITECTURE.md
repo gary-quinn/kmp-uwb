@@ -33,7 +33,7 @@ Consumers write against the common API. Platform code never appears in import st
 
 ## State Machine
 
-The ranging state machine tracks every session through 10 states with an exhaustive sealed interface hierarchy.
+The ranging state machine uses an exhaustive sealed interface hierarchy with 10 states (9 observable in practice — `Negotiating` is reserved for connector-layer use).
 
 ### States
 
@@ -43,7 +43,7 @@ RangingState
 │   ├── Ready              — Session can be started
 │   └── Unsupported        — Hardware not available
 ├── Starting
-│   ├── Negotiating        — Exchanging session parameters with peer
+│   ├── Negotiating        — Reserved for connector-layer parameter exchange
 │   └── Initializing       — Platform session being created
 ├── Active
 │   ├── Ranging            — Measurements flowing
@@ -60,13 +60,13 @@ RangingState
 
 States follow a strict forward progression: `Idle → Starting → Active → Stopped`. Within `Active`, lateral transitions are allowed (`Ranging ↔ Suspended ↔ PeerLost`). Once in `Stopped`, no further transitions occur — the session is terminal.
 
-Transitions are enforced by the `check()` precondition in `start()` and the `if (_state.value !is RangingState.Stopped)` guard in `close()`. A session that stops due to error cannot be overwritten by a subsequent `close()`.
+Transitions are enforced by the `check()` precondition in `startRanging()` and the `if (_state.value !is RangingState.Stopped)` guard in `close()`. A session that stops due to error cannot be overwritten by a subsequent `close()`. The `close()` method uses an atomic flag for idempotency and routes state mutations through the serialized scope.
 
 ### Why 10 States?
 
 Other approaches collapse this into ~3 states (Idle, Active, Stopped). This makes it impossible to distinguish:
 
-- "Session is negotiating parameters" vs "platform session is initializing"
+- "Platform session is initializing" vs "session is actively ranging"
 - "Peer is temporarily out of range" vs "session was suspended by the OS"
 - "I closed the session" vs "the peer disconnected" vs "UWB was turned off"
 
@@ -93,6 +93,8 @@ Layer 3: Consumer API (caller's coroutine context)
 **Layer 2** uses `Dispatchers.Default.limitedParallelism(1)` — a serial execution view that works on all KMP targets without `expect/actual`. At most one coroutine runs at a time per session. No locks, no mutexes.
 
 **Each session has its own serialized scope.** This is critical on iOS, where `NISessionDelegate` callbacks arrive on Apple's dispatch queue. Every delegate method wraps state mutations in `scope.launch { }` to hop back onto the serialized dispatcher.
+
+**What is and isn't serialized:** The single-writer guarantee applies to `_state` (StateFlow) mutations only. Ranging measurements use `Channel.trySend()` directly from the platform callback thread — `Channel` is a thread-safe concurrent data structure. This means a consumer may receive a measurement before the state transitions to `Active.Ranging` — an acceptable latency tradeoff over routing every measurement through the serialized scope at 5+ Hz.
 
 ### Why Not Mutex?
 
@@ -125,7 +127,7 @@ UWB measurements arrive at high frequency. The pipeline is designed for this:
 
 ### Single Session Start
 
-On Android, `scope.launch { startRangingWithPeer(peer) }` runs once when `start()` is called. The launched coroutine collects from `sessionScope.prepareSession()` and feeds results into the channel. This avoids the pitfall where each `collect()` call on `rangingResults` would create a new platform session.
+On Android, `scope.launch { ... }` runs once when `PreparedSession.startRanging()` creates the session. The launched coroutine collects from `sessionScope.prepareSession()` and feeds results into the channel. This avoids the pitfall where each `collect()` call on `rangingResults` would create a new platform session.
 
 ### iOS Discovery Token Cache
 
@@ -296,4 +298,4 @@ fake.simulateUnsupported() // state → UNSUPPORTED
 
 ---
 
-*Current as of v0.1.0*
+*Current as of v0.2.0*

@@ -194,4 +194,25 @@ class FakeRangingSessionTest {
 
             assertIs<RangingState.Stopped.ByPeer>(session.state.value)
         }
+
+    @Test
+    fun closeIsIdempotent() {
+        val session = FakeRangingSession()
+        session.close()
+        session.close()
+        assertIs<RangingState.Stopped.ByRequest>(session.state.value)
+    }
+
+    @Test
+    fun closeAfterErrorPreservesErrorState() {
+        val session = FakeRangingSession()
+        val error = SessionLost("hardware fault")
+        session.simulateError(error)
+
+        session.close()
+
+        val state = session.state.value
+        assertIs<RangingState.Stopped.ByError>(state)
+        assertEquals(error, state.error)
+    }
 }

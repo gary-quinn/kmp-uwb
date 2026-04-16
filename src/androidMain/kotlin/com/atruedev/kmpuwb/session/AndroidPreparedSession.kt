@@ -83,12 +83,11 @@ internal class AndroidPreparedSession(
             CoroutineScope(
                 SupervisorJob() + Dispatchers.Default.limitedParallelism(1) + CoroutineName("UwbRanging"),
             )
-        val state = MutableStateFlow<RangingState>(RangingState.Starting.Negotiating)
+        val state = MutableStateFlow<RangingState>(RangingState.Starting.Initializing)
         val resultChannel = createResultChannel(backpressureStrategy)
 
         sessionScope.launch {
             try {
-                state.value = RangingState.Starting.Initializing
                 state.value = RangingState.Active.Ranging
 
                 this@AndroidPreparedSession.sessionScope.prepareSession(rangingParameters).collect { platformResult ->
@@ -126,14 +125,22 @@ private class AndroidRangingSession(
     private val _state: MutableStateFlow<RangingState>,
     private val resultChannel: Channel<RangingResult>,
 ) : RangingSession {
+    private val closed = AtomicBoolean(false)
+
     override val state: StateFlow<RangingState> = _state.asStateFlow()
     override val rangingResults = resultChannel.receiveAsFlow()
 
     override fun close() {
-        if (_state.value !is RangingState.Stopped) {
-            _state.value = RangingState.Stopped.ByRequest
+        if (!closed.compareAndSet(false, true)) return
+        val job =
+            scope.launch {
+                if (_state.value !is RangingState.Stopped) {
+                    _state.value = RangingState.Stopped.ByRequest
+                }
+            }
+        job.invokeOnCompletion {
+            resultChannel.close()
+            scope.cancel()
         }
-        resultChannel.close()
-        scope.cancel()
     }
 }

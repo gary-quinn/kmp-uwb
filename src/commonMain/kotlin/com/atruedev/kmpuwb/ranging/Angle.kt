@@ -26,10 +26,16 @@ public value class Angle private constructor(
 
     public companion object {
         /** Create an [Angle] from degrees. */
-        public fun degrees(value: Double): Angle = Angle(value)
+        public fun degrees(value: Double): Angle {
+            require(value.isFinite()) { "Angle must be finite, was $value" }
+            return Angle(value)
+        }
 
         /** Create an [Angle] from radians. */
-        public fun radians(value: Double): Angle = Angle(value * (180.0 / kotlin.math.PI))
+        public fun radians(value: Double): Angle {
+            require(value.isFinite()) { "Angle must be finite, was $value" }
+            return Angle(value * (180.0 / kotlin.math.PI))
+        }
     }
 }
 

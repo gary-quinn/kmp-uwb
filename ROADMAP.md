@@ -127,4 +127,4 @@ Features we're tracking but not actively working on. Community interest and use 
 
 ---
 
-*Current as of v0.1.x*
+*Current as of v0.2.0*
