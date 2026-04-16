@@ -11,6 +11,26 @@ _Changes on `main` that have not yet been tagged for release._
 
 ---
 
+## [0.2.1] - 2026-04-16
+
+### Changed
+- ci(dependabot): bump actions/upload-pages-artifact from 4.0.0 to 5.0.0
+- ci(dependabot): bump actions/cache from 4.2.0 to 5.0.4
+- ci(dependabot): bump actions/upload-artifact from 7.0.0 to 7.0.1
+- ci(dependabot): bump peter-evans/create-pull-request from 8.1.0 to 8.1.1
+- ci(dependabot): bump actions/github-script from 8.0.0 to 9.0.0
+- build(dependabot): bump androidx-core-uwb from 1.0.0-beta01 to 1.0.0-rc01
+- build(dependabot): bump androidx.test:core-ktx from 1.6.1 to 1.7.0
+- build(dependabot): bump org.robolectric:robolectric from 4.14.1 to 4.16.1
+- build(dependabot): bump androidx.test:runner from 1.6.2 to 1.7.0
+- build(dependabot): bump androidx.test.ext:junit-ktx from 1.2.1 to 1.3.0
+
+### Fixed
+- fix: thread safety, input validation, and documentation accuracy
+
+
+---
+
 ## [0.2.0] - 2026-04-08
 
 ### Added
@@ -130,7 +150,8 @@ _Changes on `main` that have not yet been tagged for release._
 - docs: add README, ARCHITECTURE, and ROADMAP
 
 
-[Unreleased]: https://github.com/gary-quinn/kmp-uwb/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/gary-quinn/kmp-uwb/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/gary-quinn/kmp-uwb/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.7...v0.2.0
 [0.1.7]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.5...v0.1.6
