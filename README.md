@@ -103,10 +103,15 @@ val config = rangingConfig {
 ### Start ranging
 
 ```kotlin
-val session = RangingSession(config)
-val peer = Peer(address = PeerAddress(peerAddressBytes))
+val adapter = UwbAdapter()
+val prepared = adapter.prepareSession(config)
 
-session.start(peer)
+// Exchange params with peer over BLE, NFC, or WiFi
+val localBytes = prepared.localParams.toByteArray()
+// ... send localBytes to peer, receive remoteBytes ...
+val remoteParams = SessionParams(remoteBytes)
+
+val session = prepared.startRanging(remoteParams)
 
 // Observe state
 session.state.collect { state ->
@@ -146,8 +151,6 @@ val fakeSession = FakeRangingSession(
     config = rangingConfig { role = RangingRole.CONTROLLER },
 )
 val peer = Peer(address = PeerAddress(byteArrayOf(0x01, 0x02)))
-
-fakeSession.start(peer)
 
 // Inject a measurement
 fakeSession.emitResult(

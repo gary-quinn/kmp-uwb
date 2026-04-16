@@ -296,4 +296,4 @@ fake.simulateUnsupported() // state → UNSUPPORTED
 
 ---
 
-*Current as of v0.1.0*
+*Current as of v0.2.0*
