@@ -38,6 +38,20 @@ class DistanceTest {
     }
 
     @Test
+    fun infiniteDistanceThrows() {
+        assertFailsWith<IllegalArgumentException> {
+            Distance.meters(Double.POSITIVE_INFINITY)
+        }
+    }
+
+    @Test
+    fun nanDistanceThrows() {
+        assertFailsWith<IllegalArgumentException> {
+            Distance.meters(Double.NaN)
+        }
+    }
+
+    @Test
     fun zeroDistanceIsValid() {
         val distance = Distance.meters(0.0)
         assertEquals(0.0, distance.meters)

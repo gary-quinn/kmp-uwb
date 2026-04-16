@@ -28,7 +28,7 @@ public value class Distance private constructor(
     public companion object {
         /** Create a [Distance] from a value in meters. */
         public fun meters(value: Double): Distance {
-            require(value >= 0.0) { "Distance must be non-negative, was $value" }
+            require(value >= 0.0 && value.isFinite()) { "Distance must be non-negative and finite, was $value" }
             return Distance(value.toBits())
         }
 

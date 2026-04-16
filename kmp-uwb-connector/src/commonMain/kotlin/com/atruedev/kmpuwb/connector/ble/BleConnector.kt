@@ -130,6 +130,10 @@ private class ControllerConnector(
             }
 
             return SessionParams(remoteBytes)
+        } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+            throw ConnectorException(
+                ExchangeTimedOut("BLE param exchange timed out within ${config.exchangeTimeout}", cause = e),
+            )
         } catch (e: CancellationException) {
             throw e
         } catch (e: ConnectorException) {

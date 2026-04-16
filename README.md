@@ -136,7 +136,7 @@ session.rangingResults.collect { result ->
             println("Elevation: ${result.measurement.elevation}")     // vertical angle
         }
         is RangingResult.PeerLost -> println("Lost: ${result.peer}")
-        is RangingResult.PeerRecovered -> println("Recovered: ${result.peer}")
+        is RangingResult.PeerRecovered -> println("Back: ${result.peer}")  // emitted by FakeRangingSession for testing
     }
 }
 

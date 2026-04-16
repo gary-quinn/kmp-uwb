@@ -4,6 +4,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class AngleTest {
@@ -42,5 +43,26 @@ class AngleTest {
     fun negativeAnglesAreValid() {
         val angle = Angle.degrees(-45.0)
         assertEquals(-45.0, angle.degrees)
+    }
+
+    @Test
+    fun infiniteAngleThrows() {
+        assertFailsWith<IllegalArgumentException> {
+            Angle.degrees(Double.POSITIVE_INFINITY)
+        }
+    }
+
+    @Test
+    fun nanAngleThrows() {
+        assertFailsWith<IllegalArgumentException> {
+            Angle.degrees(Double.NaN)
+        }
+    }
+
+    @Test
+    fun infiniteRadiansThrows() {
+        assertFailsWith<IllegalArgumentException> {
+            Angle.radians(Double.NEGATIVE_INFINITY)
+        }
     }
 }
