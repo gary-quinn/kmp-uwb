@@ -8,7 +8,7 @@
 
 Kotlin Multiplatform UWB (Ultra-Wideband) library for Android and iOS.
 
-Part of the **kmp** library family alongside [kmp-ble](https://github.com/gary-quinn/kmp-ble). Use kmp-uwb for centimetre-accurate spatial awareness — device ranging, angle-of-arrival, and peer tracking — with the same shared-code-first philosophy.
+Part of the **kmp** library family alongside [kmp-ble](https://github.com/gary-quinn/kmp-ble). Use kmp-uwb for centimetre-accurate spatial awareness - device ranging, angle-of-arrival, and peer tracking - with the same shared-code-first philosophy.
 
 ## Features
 
@@ -17,8 +17,8 @@ Part of the **kmp** library family alongside [kmp-ble](https://github.com/gary-q
 | **Ranging Sessions** | Start peer-to-peer TWR (Two-Way Ranging) sessions with real-time distance and angle measurements |
 | **Angle of Arrival** | Azimuth and elevation from the device's UWB antenna, when hardware supports it |
 | **Adapter State** | Observe hardware availability and query device capabilities |
-| **Session Lifecycle** | 10-state state machine with exhaustive transitions — no ambiguous states |
-| **Composable Errors** | Sealed interface hierarchy — errors can implement multiple facets (`SessionError + HardwareError`) |
+| **Session Lifecycle** | 10-state state machine with exhaustive transitions - no ambiguous states |
+| **Composable Errors** | Sealed interface hierarchy - errors can implement multiple facets (`SessionError + HardwareError`) |
 | **Test Without Hardware** | `FakeRangingSession` and `FakeUwbAdapter` for full UWB simulation in unit tests |
 | **FiRa Compliant** | Static, Dynamic, and Provisioned STS security modes. Controller/Controlee roles |
 
@@ -26,9 +26,9 @@ Part of the **kmp** library family alongside [kmp-ble](https://github.com/gary-q
 
 | Module | Artifact | Description |
 |--------|----------|-------------|
-| **kmp-uwb** | `com.atruedev:kmp-uwb` | Core UWB library — adapter, sessions, ranging, state machine |
+| **kmp-uwb** | `com.atruedev:kmp-uwb` | Core UWB library - adapter, sessions, ranging, state machine |
 | **kmp-uwb-connector** | `com.atruedev:kmp-uwb-connector` | BLE-based out-of-band parameter exchange using [kmp-ble](https://github.com/gary-quinn/kmp-ble) |
-| **kmp-uwb-testing** | `com.atruedev:kmp-uwb-testing` | Test doubles — `FakeRangingSession`, `FakeUwbAdapter`, `FakePreparedSession` |
+| **kmp-uwb-testing** | `com.atruedev:kmp-uwb-testing` | Test doubles - `FakeRangingSession`, `FakeUwbAdapter`, `FakePreparedSession` |
 
 ## Setup
 
@@ -44,7 +44,7 @@ kotlin {
 }
 ```
 
-The library auto-initializes on Android via [AndroidX Startup](https://developer.android.com/topic/libraries/app-startup) — no manual `init()` call needed. If your app disables auto-initialization, call `KmpUwb.init(context)` manually.
+The library auto-initializes on Android via [AndroidX Startup](https://developer.android.com/topic/libraries/app-startup) - no manual `init()` call needed. If your app disables auto-initialization, call `KmpUwb.init(context)` manually.
 
 ### iOS (Swift Package Manager)
 
@@ -183,7 +183,7 @@ val session = prepared.startRanging(remoteParams, BackpressureStrategy.KeepLates
 
 ## kmp-uwb-connector
 
-The connector module automates BLE-based out-of-band (OOB) parameter exchange — the handshake every UWB session requires before ranging can start.
+The connector module automates BLE-based out-of-band (OOB) parameter exchange - the handshake every UWB session requires before ranging can start.
 
 ```kotlin
 commonMain.dependencies {
@@ -261,16 +261,16 @@ kmp-uwb and kmp-ble are **independent libraries** with no compile-time dependenc
 | **Error model** | Composable sealed interfaces | Composable sealed interfaces |
 | **Testing** | FakePeripheral, FakeScanner | FakeRangingSession, FakeUwbAdapter |
 
-A typical spatial app might use kmp-ble for device discovery and data exchange, then kmp-uwb for precise positioning — but neither requires the other.
+A typical spatial app might use kmp-ble for device discovery and data exchange, then kmp-uwb for precise positioning - but neither requires the other.
 
 ## Architecture
 
-- **State machine:** 10 states with sealed interface hierarchy — exhaustive `when` branches
+- **State machine:** 10 states with sealed interface hierarchy - exhaustive `when` branches
 - **Per-session concurrency:** `limitedParallelism(1)` serialization, no locks
 - **Configurable backpressure:** `BackpressureStrategy` (KeepLatest, Unbounded, KeepOldest) for ranging results
 - **Value classes:** `Distance` and `Angle` are zero-allocation wrappers with unit conversion
-- **Composable errors:** Sealed interfaces — `SessionError`, `RangingError`, `HardwareError`, `SecurityError`
-- **Defensive copies:** `PeerAddress` copies on construction and access — no aliasing bugs
+- **Composable errors:** Sealed interfaces - `SessionError`, `RangingError`, `HardwareError`, `SecurityError`
+- **Defensive copies:** `PeerAddress` copies on construction and access - no aliasing bugs
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for full design documentation.
 
@@ -281,6 +281,18 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for full design documentation.
 - iOS 15+ (U1/U2 chip required for UWB)
 - kotlinx-coroutines 1.10+
 
+## Contributing
+
+After cloning, enable the repo's pre-commit hooks once:
+
+```sh
+git config core.hooksPath .githooks
+```
+
+The hook blocks Unicode typography characters (em/en-dash, smart quotes,
+ellipsis, NBSP) in staged content. See [AGENTS.md](AGENTS.md) for the full list
+and the `typo-ok` bypass.
+
 ## License
 
-[Apache 2.0](LICENSE) — Copyright (C) 2026 Gary Quinn
+[Apache 2.0](LICENSE) - Copyright (C) 2026 Gary Quinn
