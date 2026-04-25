@@ -27,7 +27,7 @@ class UwbAdapterInstrumentedTest {
 
     @Test
     fun adapterReportsUnsupportedOnNonUwbDevice() {
-        Assume.assumeFalse("Device has UWB — skipping UNSUPPORTED test", hasUwb)
+        Assume.assumeFalse("Device has UWB - skipping UNSUPPORTED test", hasUwb)
         val adapter = UwbAdapter()
         assertEquals(UwbAdapterState.UNSUPPORTED, adapter.state.value)
         adapter.close()
@@ -36,7 +36,7 @@ class UwbAdapterInstrumentedTest {
     @Test
     fun capabilitiesReturnNoneOnNonUwbDevice() =
         runTest {
-            Assume.assumeFalse("Device has UWB — skipping NONE capabilities test", hasUwb)
+            Assume.assumeFalse("Device has UWB - skipping NONE capabilities test", hasUwb)
             val adapter = UwbAdapter()
             assertEquals(UwbCapabilities.NONE, adapter.capabilities())
             adapter.close()

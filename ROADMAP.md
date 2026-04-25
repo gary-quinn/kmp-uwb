@@ -1,6 +1,6 @@
 # kmp-uwb Roadmap
 
-> Centimetre-accurate spatial awareness for Kotlin Multiplatform — Android & iOS.
+> Centimetre-accurate spatial awareness for Kotlin Multiplatform - Android & iOS.
 
 This document tracks what's shipped, what's next, and where kmp-uwb is headed. Updated as milestones are reached.
 
@@ -12,7 +12,7 @@ This document tracks what's shipped, what's next, and where kmp-uwb is headed. U
 
 ## Shipped
 
-### v0.1.x — Foundation
+### v0.1.x - Foundation
 
 Everything needed to build production UWB ranging apps on Android and iOS from shared Kotlin code.
 
@@ -20,15 +20,15 @@ Everything needed to build production UWB ranging apps on Android and iOS from s
 |---------|---------|---------|
 | **Ranging Sessions** | v0.1.0 | Peer-to-peer TWR (Two-Way Ranging) via `RangingSession` interface. Controller and Controlee roles |
 | **Distance & Angle of Arrival** | v0.1.0 | `Distance` (meters/cm), `Angle` (degrees/radians) value classes with unit conversion |
-| **10-State State Machine** | v0.1.0 | Exhaustive sealed interface FSM — Idle, Starting, Active, Stopped with sub-states |
-| **Composable Error Hierarchy** | v0.1.0 | Sealed interfaces — `SessionError`, `RangingError`, `HardwareError`, `SecurityError`. Errors can implement multiple facets |
+| **10-State State Machine** | v0.1.0 | Exhaustive sealed interface FSM - Idle, Starting, Active, Stopped with sub-states |
+| **Composable Error Hierarchy** | v0.1.0 | Sealed interfaces - `SessionError`, `RangingError`, `HardwareError`, `SecurityError`. Errors can implement multiple facets |
 | **Adapter & Capabilities** | v0.1.0 | `UwbAdapter` with state observation and hardware capability queries (roles, AoA, channels, background) |
-| **Session Configuration** | v0.1.0 | `RangingConfig` DSL builder — role, channel, STS mode (Static/Dynamic/Provisioned), AoA, ranging interval |
-| **Testing Infrastructure** | v0.1.0 | `FakeRangingSession`, `FakeUwbAdapter` — full UWB simulation for unit tests, no hardware required |
-| **Android Auto-Init** | v0.1.0 | AndroidX Startup — zero configuration for consumers |
+| **Session Configuration** | v0.1.0 | `RangingConfig` DSL builder - role, channel, STS mode (Static/Dynamic/Provisioned), AoA, ranging interval |
+| **Testing Infrastructure** | v0.1.0 | `FakeRangingSession`, `FakeUwbAdapter` - full UWB simulation for unit tests, no hardware required |
+| **Android Auto-Init** | v0.1.0 | AndroidX Startup - zero configuration for consumers |
 | **Distribution** | v0.1.0 | Maven Central (`com.atruedev:kmp-uwb`) + Swift Package Manager (XCFramework) |
-| **CI/CD Pipeline** | v0.1.0 | GitHub Actions — ktlint, Android build/test, iOS build/test, Dokka docs, Maven Central publish, GitHub Release |
-| **Peer Connector** | v0.1.x | Transport-agnostic OOB parameter exchange — `PreparedSession`, `PeerConnector` fun interface, `startWithConnector` orchestration. `FakePreparedSession`, `FakePeerConnector` test doubles |
+| **CI/CD Pipeline** | v0.1.0 | GitHub Actions - ktlint, Android build/test, iOS build/test, Dokka docs, Maven Central publish, GitHub Release |
+| **Peer Connector** | v0.1.x | Transport-agnostic OOB parameter exchange - `PreparedSession`, `PeerConnector` fun interface, `startWithConnector` orchestration. `FakePreparedSession`, `FakePeerConnector` test doubles |
 | **iOS Discovery Token Cache** | v0.1.x | Per-session `DiscoveryTokenCache` avoids repeated NSKeyedArchiver serialization on the ranging hot path |
 
 ### Known Limitations
@@ -42,7 +42,7 @@ Everything needed to build production UWB ranging apps on Android and iOS from s
 
 ## Planned
 
-### v0.2 — Multi-Peer & Session Management
+### v0.2 - Multi-Peer & Session Management
 
 **Theme:** Real-world ranging scenarios with multiple devices.
 
@@ -53,9 +53,9 @@ Everything needed to build production UWB ranging apps on Android and iOS from s
 | **Session events Flow** | Dedicated event stream for session-level events (peer joined, peer left, suspension, resume) |
 | **Ranging filters** | Distance smoothing, outlier rejection, moving average |
 
-### v0.3 — Spatial Awareness
+### v0.3 - Spatial Awareness
 
-**Theme:** Beyond distance — direction, zones, and spatial context.
+**Theme:** Beyond distance - direction, zones, and spatial context.
 
 | Feature | Notes |
 |---------|-------|
@@ -64,7 +64,7 @@ Everything needed to build production UWB ranging apps on Android and iOS from s
 | **Heading estimation** | Device-relative heading from AoA data |
 | **Accuracy metrics** | Confidence intervals and NLOS (Non-Line-of-Sight) detection |
 
-### v1.0 — Stability Guarantee
+### v1.0 - Stability Guarantee
 
 **Theme:** API stability commitment backed by production usage.
 
@@ -108,7 +108,7 @@ Features we're tracking but not actively working on. Community interest and use 
 | Secure ranging | End-to-end session key management with STS provisioning |
 | Indoor positioning | Map-based positioning using multiple anchors (TDoA) |
 | UWB + BLE connector module | Dedicated `kmp-uwb-connector` bridge with kmp-ble for seamless BLE discovery -> OOB -> ranging pipeline |
-| Precision finding UX | Item tracker patterns — BLE coarse finding -> UWB last-meter guidance |
+| Precision finding UX | Item tracker patterns - BLE coarse finding -> UWB last-meter guidance |
 | Chipset quirk registry | NXP vs Qorvo behavioral differences (same pattern as kmp-ble-quirks) |
 | ARKit camera-assisted guidance | iOS 16+ visual direction overlay |
 | Geofencing | UWB-based precision geofences (sub-meter accuracy) |
@@ -123,7 +123,7 @@ Features we're tracking but not actively working on. Community interest and use 
 
 - **Feature requests:** [Open an issue](https://github.com/gary-quinn/kmp-uwb/issues) describing your use case
 - **Bug reports:** Include platform, device model, and minimal reproduction
-- **Contributions:** PRs welcome — see the issue tracker for "good first issue" labels
+- **Contributions:** PRs welcome - see the issue tracker for "good first issue" labels
 
 ---
 

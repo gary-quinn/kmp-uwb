@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
  * Provides access to UWB adapter state and capabilities.
  *
  * [state] is a snapshot captured at construction time. Unlike BLE, the Android UWB SDK
- * does not provide a state-change broadcast — create a new adapter instance to re-query.
+ * does not provide a state-change broadcast - create a new adapter instance to re-query.
  *
  * Obtain an instance via [UwbAdapter] factory function.
  */

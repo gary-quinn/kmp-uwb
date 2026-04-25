@@ -10,7 +10,7 @@ import kotlin.time.Duration.Companion.milliseconds
  *
  * **Platform support:** [role], [channel], [sessionId], and [sessionKey] are used by
  * both Android and iOS. [rangingInterval], [angleOfArrival], and [stsMode] are accepted
- * for forward compatibility but currently ignored — Android uses automatic update rate
+ * for forward compatibility but currently ignored - Android uses automatic update rate
  * and DS-TWR config, iOS delegates to NearbyInteraction defaults.
  */
 public data class RangingConfig(

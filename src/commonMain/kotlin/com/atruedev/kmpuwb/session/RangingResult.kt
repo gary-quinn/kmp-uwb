@@ -26,7 +26,7 @@ public sealed interface RangingResult {
     /**
      * The peer moved out of range.
      *
-     * The session remains active — measurements will resume
+     * The session remains active - measurements will resume
      * when the peer is detectable again.
      */
     public data class PeerLost(

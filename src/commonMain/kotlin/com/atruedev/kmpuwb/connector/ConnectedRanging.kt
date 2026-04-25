@@ -19,7 +19,7 @@ public suspend fun UwbAdapter.startWithConnector(
     backpressureStrategy: BackpressureStrategy = BackpressureStrategy.KeepLatest,
 ): RangingSession {
     val prepared = prepareSession(config)
-    // Not using prepared.use {} — on success, ownership transfers to the returned RangingSession.
+    // Not using prepared.use {} - on success, ownership transfers to the returned RangingSession.
     try {
         val remoteParams = connector.exchange(prepared.localParams)
         return prepared.startRanging(remoteParams, backpressureStrategy)

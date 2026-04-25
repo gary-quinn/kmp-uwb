@@ -15,7 +15,7 @@ public enum class BackpressureStrategy {
 
     /**
      * Buffer all measurements without dropping. Long-running sessions at high
-     * update rates will accumulate memory proportionally — callers are responsible
+     * update rates will accumulate memory proportionally - callers are responsible
      * for bounding session lifetime or draining results promptly.
      */
     Unbounded,

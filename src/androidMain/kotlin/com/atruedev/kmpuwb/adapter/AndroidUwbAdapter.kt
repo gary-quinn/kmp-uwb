@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 internal class AndroidUwbAdapter(
     private val context: Context,
 ) : UwbAdapter {
-    // Snapshot state — Android UWB SDK does not provide a state-change broadcast.
+    // Snapshot state - Android UWB SDK does not provide a state-change broadcast.
     // Re-query via UwbAdapter() if the user toggles UWB in Settings.
     private val _state = MutableStateFlow(resolveAdapterState())
 
@@ -65,7 +65,7 @@ internal class AndroidUwbAdapter(
             UwbManager.createInstance(context)
             UwbAdapterState.ON
         } catch (_: Exception) {
-            // Alpha SDK — any createInstance() failure means UWB is unavailable.
+            // Alpha SDK - any createInstance() failure means UWB is unavailable.
             UwbAdapterState.OFF
         }
     }

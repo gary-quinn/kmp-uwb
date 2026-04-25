@@ -80,7 +80,7 @@ private fun RoleSelectionScreen(onRoleSelected: (RangingRole) -> Unit) {
         }
         Text(
             text =
-                "Run on two UWB devices — one as Controller, one as Controlee.\n" +
+                "Run on two UWB devices - one as Controller, one as Controlee.\n" +
                     "BLE handles parameter exchange automatically.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,

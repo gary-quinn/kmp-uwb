@@ -72,7 +72,7 @@ class BleConnectorTest {
 
             connector.exchange(localParams)
 
-            // peripheral.close() is called in finally — further operations should fail
+            // peripheral.close() is called in finally - further operations should fail
             assertFailsWith<IllegalStateException> {
                 peripheral.connect()
             }
@@ -83,7 +83,7 @@ class BleConnectorTest {
         runTest {
             val peripheral =
                 FakePeripheral {
-                    // No UWB service — exchange will fail with missing characteristic
+                    // No UWB service - exchange will fail with missing characteristic
                 }
             val connector = buildConnector(peripheral)
 
@@ -102,7 +102,7 @@ class BleConnectorTest {
         runTest {
             val peripheral =
                 FakePeripheral {
-                    // Empty — no services at all
+                    // Empty - no services at all
                 }
             val connector = buildConnector(peripheral)
 
@@ -131,7 +131,7 @@ class BleConnectorTest {
         runTest {
             val failingScanner =
                 FakeScanner {
-                    // Preconfigured ad that is NOT connectable — scanner.first { it.isConnectable } won't match
+                    // Preconfigured ad that is NOT connectable - scanner.first { it.isConnectable } won't match
                     advertisement {
                         name("NotConnectable")
                         isConnectable(false)
@@ -143,7 +143,7 @@ class BleConnectorTest {
             val connector = BleConnector.controller(failingScanner, config) { error("should not be called") }
 
             // TimeoutCancellationException is a CancellationException, which the current
-            // catch order in scanForPeer() rethrows directly. This is a known limitation —
+            // catch order in scanForPeer() rethrows directly. This is a known limitation -
             // the catch(TimeoutCancellationException) branch is unreachable.
             assertFailsWith<Exception> {
                 connector.exchange(localParams)

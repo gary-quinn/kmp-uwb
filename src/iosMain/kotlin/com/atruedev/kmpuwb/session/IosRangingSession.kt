@@ -76,7 +76,7 @@ internal class IosRangingSession(
 
         val session = niSession ?: error("NISession not initialized")
 
-        // Safe to set directly — delegate is not yet assigned, no concurrent writers.
+        // Safe to set directly - delegate is not yet assigned, no concurrent writers.
         _state.value = RangingState.Starting.Initializing
 
         val peerToken = deserializeDiscoveryToken(remoteParams.toByteArray())
@@ -200,8 +200,8 @@ internal class IosRangingSession(
  *
  * NSKeyedArchiver serialization is expensive (~0.1ms). Without caching,
  * it runs on every didUpdateNearbyObjects callback (~5Hz per peer).
- * The token-to-address mapping is stable — the same token always produces
- * the same bytes — so caching is safe.
+ * The token-to-address mapping is stable - the same token always produces
+ * the same bytes - so caching is safe.
  *
  * Thread safety: all delegate callbacks run on Apple's dispatch queue,
  * and this cache is only accessed from those callbacks. No synchronization needed.
@@ -281,7 +281,7 @@ internal fun deserializeDiscoveryToken(bytes: ByteArray): NIDiscoveryToken {
             if (obj == null) {
                 val desc = error.value?.localizedDescription ?: "unknown error"
                 error(
-                    "Failed to deserialize NIDiscoveryToken from ${tokenBytes.size} bytes: $desc — " +
+                    "Failed to deserialize NIDiscoveryToken from ${tokenBytes.size} bytes: $desc - " +
                         "data may be corrupted during OOB transfer",
                 )
             }

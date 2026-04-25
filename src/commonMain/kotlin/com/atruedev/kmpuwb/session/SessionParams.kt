@@ -6,7 +6,7 @@ package com.atruedev.kmpuwb.session
  * On Android this encodes the local UWB address, complex channel, session ID, and key.
  * On iOS this encodes a serialized `NIDiscoveryToken`.
  *
- * Applications should not inspect or construct these bytes directly — obtain them
+ * Applications should not inspect or construct these bytes directly - obtain them
  * from [PreparedSession.localParams] and exchange them with the remote peer over
  * any out-of-band transport (BLE, NFC, WiFi, etc.).
  */

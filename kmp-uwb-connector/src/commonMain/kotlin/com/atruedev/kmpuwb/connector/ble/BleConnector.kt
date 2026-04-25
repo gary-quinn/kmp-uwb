@@ -26,12 +26,12 @@ import kotlin.uuid.ExperimentalUuidApi
  * [PeerConnector] implementation using BLE for automatic OOB parameter exchange.
  *
  * ```kotlin
- * // Controller — scans for a controlee, connects, exchanges params
+ * // Controller - scans for a controlee, connects, exchanges params
  * val scanner = Scanner { filters { match { serviceUuid(UwbOobService.SERVICE_UUID) } } }
  * val connector = BleConnector.controller(scanner)
  * val session = adapter.startWithConnector(config, connector)
  *
- * // Controlee — advertises, waits for controller to connect and exchange
+ * // Controlee - advertises, waits for controller to connect and exchange
  * val connector = BleConnector.controlee()
  * val session = adapter.startWithConnector(config, connector)
  * ```
