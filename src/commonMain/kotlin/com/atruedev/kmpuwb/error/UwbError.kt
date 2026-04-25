@@ -3,7 +3,7 @@ package com.atruedev.kmpuwb.error
 /**
  * Root of the UWB error hierarchy.
  *
- * Uses sealed interfaces to enable composable error handling —
+ * Uses sealed interfaces to enable composable error handling -
  * an error can implement multiple interfaces (e.g., [ChipsetError]
  * is both a [RangingError] and a [HardwareError]).
  *
@@ -45,7 +45,7 @@ public data class PeerUnreachable(
     override val cause: Throwable? = null,
 ) : RangingError
 
-/** A chipset-level error — composable as both [RangingError] and [HardwareError]. */
+/** A chipset-level error - composable as both [RangingError] and [HardwareError]. */
 public data class ChipsetError(
     val code: Int,
     override val message: String,

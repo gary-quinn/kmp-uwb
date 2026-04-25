@@ -33,32 +33,32 @@ Consumers write against the common API. Platform code never appears in import st
 
 ## State Machine
 
-The ranging state machine uses an exhaustive sealed interface hierarchy with 10 states (9 observable in practice — `Negotiating` is reserved for connector-layer use).
+The ranging state machine uses an exhaustive sealed interface hierarchy with 10 states (9 observable in practice - `Negotiating` is reserved for connector-layer use).
 
 ### States
 
 ```
 RangingState
 ├── Idle
-│   ├── Ready              — Session can be started
-│   └── Unsupported        — Hardware not available
+│   ├── Ready              - Session can be started
+│   └── Unsupported        - Hardware not available
 ├── Starting
-│   ├── Negotiating        — Reserved for connector-layer parameter exchange
-│   └── Initializing       — Platform session being created
+│   ├── Negotiating        - Reserved for connector-layer parameter exchange
+│   └── Initializing       - Platform session being created
 ├── Active
-│   ├── Ranging            — Measurements flowing
-│   ├── Suspended          — Temporarily paused by system (iOS background)
-│   └── PeerLost           — Peer left range, session still alive
+│   ├── Ranging            - Measurements flowing
+│   ├── Suspended          - Temporarily paused by system (iOS background)
+│   └── PeerLost           - Peer left range, session still alive
 └── Stopped
-    ├── ByRequest          — Local close() called
-    ├── ByPeer             — Remote peer ended session
-    ├── ByError(error)     — Session failed with details
-    └── BySystemEvent      — UWB disabled, airplane mode
+    ├── ByRequest          - Local close() called
+    ├── ByPeer             - Remote peer ended session
+    ├── ByError(error)     - Session failed with details
+    └── BySystemEvent      - UWB disabled, airplane mode
 ```
 
 ### Transition Rules
 
-States follow a strict forward progression: `Idle → Starting → Active → Stopped`. Within `Active`, lateral transitions are allowed (`Ranging ↔ Suspended ↔ PeerLost`). Once in `Stopped`, no further transitions occur — the session is terminal.
+States follow a strict forward progression: `Idle → Starting → Active → Stopped`. Within `Active`, lateral transitions are allowed (`Ranging ↔ Suspended ↔ PeerLost`). Once in `Stopped`, no further transitions occur - the session is terminal.
 
 Transitions are enforced by the `check()` precondition in `startRanging()` and the `if (_state.value !is RangingState.Stopped)` guard in `close()`. A session that stops due to error cannot be overwritten by a subsequent `close()`. The `close()` method uses an atomic flag for idempotency and routes state mutations through the serialized scope.
 
@@ -90,11 +90,11 @@ Layer 2: Serialized state mutations (limitedParallelism(1))
 Layer 3: Consumer API (caller's coroutine context)
 ```
 
-**Layer 2** uses `Dispatchers.Default.limitedParallelism(1)` — a serial execution view that works on all KMP targets without `expect/actual`. At most one coroutine runs at a time per session. No locks, no mutexes.
+**Layer 2** uses `Dispatchers.Default.limitedParallelism(1)` - a serial execution view that works on all KMP targets without `expect/actual`. At most one coroutine runs at a time per session. No locks, no mutexes.
 
 **Each session has its own serialized scope.** This is critical on iOS, where `NISessionDelegate` callbacks arrive on Apple's dispatch queue. Every delegate method wraps state mutations in `scope.launch { }` to hop back onto the serialized dispatcher.
 
-**What is and isn't serialized:** The single-writer guarantee applies to `_state` (StateFlow) mutations only. Ranging measurements use `Channel.trySend()` directly from the platform callback thread — `Channel` is a thread-safe concurrent data structure. This means a consumer may receive a measurement before the state transitions to `Active.Ranging` — an acceptable latency tradeoff over routing every measurement through the serialized scope at 5+ Hz.
+**What is and isn't serialized:** The single-writer guarantee applies to `_state` (StateFlow) mutations only. Ranging measurements use `Channel.trySend()` directly from the platform callback thread - `Channel` is a thread-safe concurrent data structure. This means a consumer may receive a measurement before the state transitions to `Active.Ranging` - an acceptable latency tradeoff over routing every measurement through the serialized scope at 5+ Hz.
 
 ### Why Not Mutex?
 
@@ -113,17 +113,17 @@ override val rangingResults: Flow<RangingResult> = resultChannel.receiveAsFlow()
 
 UWB measurements arrive at high frequency. The pipeline is designed for this:
 
-- **Configurable `BackpressureStrategy`** — passed to `startRanging()`, kept separate from `RangingConfig` (protocol params) because buffering is a client-side delivery concern:
-  - `KeepLatest` (default): `Channel(64, DROP_OLDEST)` — stale measurements dropped, consumer sees latest data
-  - `Unbounded`: `Channel(UNLIMITED)` — all measurements buffered for analytics/replay
-  - `KeepOldest`: `Channel(64, DROP_LATEST)` — newest measurements dropped, strict arrival order preserved
-- **`createResultChannel()`** — shared factory in `commonMain` used by both Android and iOS, avoiding duplicated channel construction logic.
-- **`receiveAsFlow()`** — converts the channel to a cold-on-subscription Flow. Unlike `channelFlow`, this doesn't start a new platform session per collector.
-- **`trySend()`** — non-suspending send from platform callbacks. Never blocks the OS callback thread.
+- **Configurable `BackpressureStrategy`** - passed to `startRanging()`, kept separate from `RangingConfig` (protocol params) because buffering is a client-side delivery concern:
+  - `KeepLatest` (default): `Channel(64, DROP_OLDEST)` - stale measurements dropped, consumer sees latest data
+  - `Unbounded`: `Channel(UNLIMITED)` - all measurements buffered for analytics/replay
+  - `KeepOldest`: `Channel(64, DROP_LATEST)` - newest measurements dropped, strict arrival order preserved
+- **`createResultChannel()`** - shared factory in `commonMain` used by both Android and iOS, avoiding duplicated channel construction logic.
+- **`receiveAsFlow()`** - converts the channel to a cold-on-subscription Flow. Unlike `channelFlow`, this doesn't start a new platform session per collector.
+- **`trySend()`** - non-suspending send from platform callbacks. Never blocks the OS callback thread.
 
 ### Why Not SharedFlow?
 
-`MutableSharedFlow(replay=0)` drops values when no collector is active. `MutableSharedFlow(replay=1)` replays stale data to new collectors. The channel approach gives explicit buffer control — the right trade-off for real-time sensor data.
+`MutableSharedFlow(replay=0)` drops values when no collector is active. `MutableSharedFlow(replay=1)` replays stale data to new collectors. The channel approach gives explicit buffer control - the right trade-off for real-time sensor data.
 
 ### Single Session Start
 
@@ -131,7 +131,7 @@ On Android, `scope.launch { ... }` runs once when `PreparedSession.startRanging(
 
 ### iOS Discovery Token Cache
 
-On iOS, `NIDiscoveryToken` → `PeerAddress` requires `NSKeyedArchiver` serialization. Since the token-to-address mapping is stable for a session's lifetime, `DiscoveryTokenCache` caches it per session rather than re-serializing on every callback. No synchronization needed — the cache is only accessed from Apple's delegate dispatch queue.
+On iOS, `NIDiscoveryToken` → `PeerAddress` requires `NSKeyedArchiver` serialization. Since the token-to-address mapping is stable for a session's lifetime, `DiscoveryTokenCache` caches it per session rather than re-serializing on every callback. No synchronization needed - the cache is only accessed from Apple's delegate dispatch queue.
 
 ---
 
@@ -146,7 +146,7 @@ UwbError
 │   └── SessionRejected(message)
 ├── RangingError
 │   ├── PeerUnreachable(message)
-│   └── ChipsetError(message)  — also implements HardwareError
+│   └── ChipsetError(message)  - also implements HardwareError
 ├── HardwareError
 │   ├── ChipsetError(message)
 │   ├── UnsupportedFeature(message)
@@ -188,7 +188,7 @@ Construction validates non-negative values. Extension properties (`2.5.meters`, 
 
 ### Why Value Classes?
 
-Zero-allocation on JVM. Type safety — you can't accidentally pass a distance where an angle is expected. Unit conversion is built into the type (`angle.radians`, `distance.meters`).
+Zero-allocation on JVM. Type safety - you can't accidentally pass a distance where an angle is expected. Unit conversion is built into the type (`angle.radians`, `distance.meters`).
 
 ---
 
@@ -205,7 +205,7 @@ public class PeerAddress(bytes: ByteArray) {
 }
 ```
 
-This was initially a `@JvmInline value class`, but `ByteArray` uses referential equality by default — two `PeerAddress` instances with identical bytes would not be equal. Converting to a regular class with `contentEquals`/`contentHashCode` fixes this.
+This was initially a `@JvmInline value class`, but `ByteArray` uses referential equality by default - two `PeerAddress` instances with identical bytes would not be equal. Converting to a regular class with `contentEquals`/`contentHashCode` fixes this.
 
 ### iOS Discovery Token Serialization
 
@@ -228,7 +228,7 @@ This ensures consistent peer identity across delegate callbacks throughout a ses
 | `UwbAdapter` | `PackageManager.FEATURE_UWB` check + `UwbManager` capabilities |
 | `RangingSession` | `UwbManager.controllerSessionScope()` / `controleeSessionScope()` |
 | `RangingResult` | `androidx.core.uwb.RangingResult.RangingResultPosition` / `RangingResultPeerDisconnected` |
-| Auto-init | `AndroidX Startup` — `KmpUwbInitializer` captures `Context` at app launch |
+| Auto-init | `AndroidX Startup` - `KmpUwbInitializer` captures `Context` at app launch |
 
 The Android implementation uses `RangingParameters` with DS-TWR (Double-Sided Two-Way Ranging) and automatic update rate.
 
@@ -241,7 +241,7 @@ The Android implementation uses `RangingParameters` with DS-TWR (Double-Sided Tw
 | `RangingResult` | `NINearbyObject.distance` + `direction` (simd_float3 → `Vector128`) |
 | Direction parsing | `Vector128.getFloatAt(0/1/2)` for x/y/z → `atan2` for azimuth/elevation |
 
-The `NISessionDelegate` implements multiple `session(_:...)` overloads for the `NISessionDelegateProtocol`. Kotlin/Native 2.3.20 handles the ObjC selector disambiguation automatically — no `@Suppress` annotations needed.
+The `NISessionDelegate` implements multiple `session(_:...)` overloads for the `NISessionDelegateProtocol`. Kotlin/Native 2.3.20 handles the ObjC selector disambiguation automatically - no `@Suppress` annotations needed.
 
 ### JVM
 

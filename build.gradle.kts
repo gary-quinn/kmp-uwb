@@ -101,7 +101,7 @@ run {
     }
     afterEvaluate {
         check(tasks.findByName(taskName) != null) {
-            "Expected task '$taskName' not found — KGP may have renamed it. ProGuard rules will not be bundled."
+            "Expected task '$taskName' not found - KGP may have renamed it. ProGuard rules will not be bundled."
         }
     }
 }

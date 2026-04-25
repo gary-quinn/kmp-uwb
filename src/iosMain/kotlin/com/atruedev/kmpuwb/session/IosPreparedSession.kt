@@ -57,7 +57,7 @@ internal class IosPreparedSession private constructor(
                                 niSession.invalidate()
                                 cont.resumeWithException(
                                     IllegalStateException(
-                                        "NISession.discoveryToken unavailable — " +
+                                        "NISession.discoveryToken unavailable - " +
                                             "device may not support NearbyInteraction",
                                     ),
                                 )

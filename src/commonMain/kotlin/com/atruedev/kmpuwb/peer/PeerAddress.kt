@@ -5,7 +5,7 @@ package com.atruedev.kmpuwb.peer
  *
  * Platform-specific: on Android this maps to a UWB address byte array,
  * on iOS this maps to the serialized NearbyInteraction discovery token.
- * The raw bytes are opaque — equality, identity, and display are the
+ * The raw bytes are opaque - equality, identity, and display are the
  * valid operations across platforms.
  *
  * Uses content-based equality: two addresses with the same bytes are equal.

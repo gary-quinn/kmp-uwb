@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 /**
  * Test double for [RangingSession] that allows injecting measurements and simulating errors.
  *
- * Created in [RangingState.Active.Ranging] by default — matching real sessions
+ * Created in [RangingState.Active.Ranging] by default - matching real sessions
  * returned by [com.atruedev.kmpuwb.session.PreparedSession.startRanging].
  *
  * ```

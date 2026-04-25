@@ -31,10 +31,10 @@ public interface PreparedSession : AutoCloseable {
      * (Android: UwbAddress + ComplexChannel; iOS: NIDiscoveryToken).
      *
      * [backpressureStrategy] controls how measurements are buffered when the
-     * consumer falls behind — kept separate from [config] because it is a
+     * consumer falls behind - kept separate from [config] because it is a
      * client-side delivery concern, not a UWB protocol parameter.
      *
-     * This method consumes the prepared session — calling it again throws
+     * This method consumes the prepared session - calling it again throws
      * [IllegalStateException].
      */
     public suspend fun startRanging(
