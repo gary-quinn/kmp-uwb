@@ -11,6 +11,17 @@ _Changes on `main` that have not yet been tagged for release._
 
 ---
 
+## [0.2.2] - 2026-04-25
+
+### Changed
+- ci(dependabot): bump actions/cache from 5.0.4 to 5.0.5
+- build(dependabot): bump com.android.kotlin.multiplatform.library from 9.1.0 to 9.1.1
+- chore: add agent guidelines and typography pre-commit hook
+- ci: add typography-check job
+
+
+---
+
 ## [0.2.1] - 2026-04-16
 
 ### Changed
@@ -150,7 +161,8 @@ _Changes on `main` that have not yet been tagged for release._
 - docs: add README, ARCHITECTURE, and ROADMAP
 
 
-[Unreleased]: https://github.com/gary-quinn/kmp-uwb/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/gary-quinn/kmp-uwb/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/gary-quinn/kmp-uwb/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/gary-quinn/kmp-uwb/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.7...v0.2.0
 [0.1.7]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.6...v0.1.7
