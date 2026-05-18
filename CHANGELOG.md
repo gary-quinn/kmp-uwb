@@ -11,6 +11,19 @@ _Changes on `main` that have not yet been tagged for release._
 
 ---
 
+## [0.2.3] - 2026-05-18
+
+### Changed
+- build(dependabot): bump kotlin from 2.3.20 to 2.3.21
+- build(dependabot): bump coroutines from 1.10.2 to 1.11.0
+- build(dependabot): bump com.android.kotlin.multiplatform.library from 9.1.1 to 9.2.1
+- build(dependabot): bump androidx-core-uwb from 1.0.0-rc01 to 1.0.0
+- build(dependabot): bump gradle-wrapper from 9.4.1 to 9.5.1
+- build(dependabot): bump org.jetbrains.compose from 1.10.3 to 1.11.0
+
+
+---
+
 ## [0.2.2] - 2026-04-25
 
 ### Changed
@@ -161,7 +174,8 @@ _Changes on `main` that have not yet been tagged for release._
 - docs: add README, ARCHITECTURE, and ROADMAP
 
 
-[Unreleased]: https://github.com/gary-quinn/kmp-uwb/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/gary-quinn/kmp-uwb/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/gary-quinn/kmp-uwb/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/gary-quinn/kmp-uwb/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/gary-quinn/kmp-uwb/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/gary-quinn/kmp-uwb/compare/v0.1.7...v0.2.0
