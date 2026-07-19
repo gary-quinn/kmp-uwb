@@ -38,7 +38,7 @@ Part of the **kmp** library family alongside [kmp-ble](https://github.com/gary-q
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("com.atruedev:kmp-uwb:0.2.3")
+            implementation("com.atruedev:kmp-uwb:0.2.4")
         }
     }
 }
@@ -187,7 +187,7 @@ The connector module automates BLE-based out-of-band (OOB) parameter exchange - 
 
 ```kotlin
 commonMain.dependencies {
-    implementation("com.atruedev:kmp-uwb-connector:0.2.3")
+    implementation("com.atruedev:kmp-uwb-connector:0.2.4")
 }
 ```
 

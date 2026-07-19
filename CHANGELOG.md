@@ -11,6 +11,23 @@ _Changes on `main` that have not yet been tagged for release._
 
 ---
 
+## [0.2.4] - 2026-07-19
+
+### Changed
+- build(dependabot): bump androidx.core:core-ktx from 1.18.0 to 1.19.0
+- build(dependabot): bump kotlin from 2.3.21 to 2.4.0
+- build(dependabot): bump org.jetbrains.compose from 1.11.0 to 1.11.1
+- ci(dependabot): bump gradle/actions from 6.1.0 to 6.2.0
+- ci(dependabot): bump actions/checkout from 6.0.2 to 7.0.0
+- ci(dependabot): bump gradle/actions/setup-gradle from 6.1.0 to 6.2.0
+- ci(dependabot): bump actions/cache from 5.0.5 to 6.1.0
+- ci(dependabot): bump actions/setup-java from 5.2.0 to 5.4.0
+- build(dependabot): bump com.vanniktech.maven.publish from 0.36.0 to 0.37.0
+- build(dependabot): bump gradle-wrapper from 9.5.1 to 9.6.1
+
+
+---
+
 ## [0.2.3] - 2026-05-18
 
 ### Changed
@@ -174,7 +191,8 @@ _Changes on `main` that have not yet been tagged for release._
 - docs: add README, ARCHITECTURE, and ROADMAP
 
 
-[Unreleased]: https://github.com/gary-quinn/kmp-uwb/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/gary-quinn/kmp-uwb/compare/v0.2.4...HEAD
+[0.2.4]: https://github.com/gary-quinn/kmp-uwb/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/gary-quinn/kmp-uwb/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/gary-quinn/kmp-uwb/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/gary-quinn/kmp-uwb/compare/v0.2.0...v0.2.1
